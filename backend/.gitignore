@@ -1,0 +1,230 @@
+# ======================================
+# Backend (Python/FastAPI) .gitignore
+# ======================================
+
+# ======================================
+# Python
+# ======================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ======================================
+# FastAPI Specific
+# ======================================
+
+# FastAPI logs
+fastapi.log
+
+# Uvicorn logs
+uvicorn.log
+
+# ======================================
+# Database
+# ======================================
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# PostgreSQL
+*.pgdump
+*.pgsql
+
+# MySQL
+*.mysql
+
+# Database migration files (if sensitive)
+# alembic/versions/*.py
+
+# ======================================
+# Application Specific
+# ======================================
+
+# Uploaded files
+uploads/
+static/uploads/
+media/
+
+# Configuration files with sensitive data
+config.ini
+settings.ini
+local_settings.py
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+
+# API keys and secrets
+secrets.json
+api_keys.json
+
+# Log files
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Cache directories
+.cache/
+cache/
+
+# ======================================
+# Development and Testing
+# ======================================
+
+# Testing
+.pytest_cache/
+test_results/
+.coverage
+htmlcov/
+
+# Development databases
+dev.db
+test.db
+local.db
+
+# Backup files
+*.backup
+*.bak
+
+# ======================================
+# Alembic (Database Migrations)
+# ======================================
+
+# Keep alembic structure but ignore environment-specific configs
+# alembic.ini  # Uncomment if you have sensitive DB configs here
+
+# ======================================
+# Docker
+# ======================================
+
+# Docker build context
+Dockerfile.local
+docker-compose.local.yml

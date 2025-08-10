@@ -1,0 +1,275 @@
+# ======================================
+# Frontend (React/Vite/Node.js) .gitignore
+# ======================================
+
+# ======================================
+# Node.js
+# ======================================
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# ======================================
+# Vite
+# ======================================
+
+# Vite build outputs
+dist/
+dist-ssr/
+*.local
+
+# Vite cache
+node_modules/.vite/
+
+# ======================================
+# React
+# ======================================
+
+# React build
+build/
+*.tgz
+
+# React Storybook
+.out
+.storybook-out
+
+# ======================================
+# TypeScript
+# ======================================
+
+# TypeScript build outputs
+*.tsbuildinfo
+
+# ======================================
+# Testing
+# ======================================
+
+# Jest
+coverage/
+.nyc_output/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ======================================
+# Build Tools
+# ======================================
+
+# Webpack
+.webpack/
+
+# Rollup
+.rpt2_cache/
+
+# Parcel
+.parcel-cache/
+
+# ======================================
+# Package Managers
+# ======================================
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# pnpm
+.pnpm-store/
+
+# ======================================
+# Tailwind CSS
+# ======================================
+
+# Tailwind build outputs (if not using PostCSS)
+# src/styles/output.css
+
+# ======================================
+# ESLint/Prettier
+# ======================================
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
+
+# ======================================
+# Development
+# ======================================
+
+# Local development
+.local
+*.local
+
+# Hot reload
+*.hot-update.*
+
+# Source maps (if you don't want to commit them)
+*.map
+
+# ======================================
+# Assets and Media
+# ======================================
+
+# Large media files (if not needed in repo)
+# *.mp4
+# *.avi
+# *.mov
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
+# *.svg
+
+# User uploads
+uploads/
+user-content/
+
+# ======================================
+# Deployment
+# ======================================
+
+# Build artifacts
+build/
+dist/
+out/
+
+# Static generation
+.static/
+
+# Vercel
+.vercel
+
+# Netlify
+.netlify/
+
+# ======================================
+# Development Tools
+# ======================================
+
+# VS Code settings (if project-specific)
+# .vscode/
+
+# WebStorm/IntelliJ
+# .idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ======================================
+# OS Files
+# ======================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
