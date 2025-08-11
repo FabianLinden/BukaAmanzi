@@ -772,3 +772,53 @@ This system design provides a comprehensive blueprint for building Water Watch, 
 The modular design allows for iterative development and future enhancements, while the robust ETL pipeline ensures reliable data integration from multiple government sources. The community reporting system balances transparency with content moderation, creating a trustworthy platform for citizen engagement.
 
 **Next Steps**: Review and approve this design document before proceeding with implementation accordingly. Create the project as if you were a full-stack developer with a focus on the user experience and the best practices of software development.
+
+## 9. Testing Strategy (Updated)
+
+### Unit Testing
+- **Coverage**: 90%+ coverage for critical paths
+- **Frameworks**: pytest with pytest-asyncio for async tests
+- **Mocking**: unittest.mock for external dependencies
+- **Fixtures**: Reusable test data and mocks
+
+### Integration Testing
+- **Database**: Test with SQLite in-memory database
+- **API**: Test API endpoints with TestClient
+- **WebSockets**: Test real-time functionality
+
+### Test Directory Structure
+```
+testing/
+├── unit/
+│   ├── test_etl_treasury.py     # Treasury ETL tests
+│   ├── test_etl_dws.py          # DWS ETL tests
+│   └── test_models.py           # Database model tests
+├── integration/
+│   ├── test_etl_integration.py  # End-to-end ETL tests
+│   └── test_api_endpoints.py    # API integration tests
+└── conftest.py                 # Test fixtures
+```
+
+### Continuous Integration
+- **GitHub Actions**: Automated test runs on push/PR
+- **Code Quality**: flake8, black, mypy
+- **Test Reports**: JUnit XML and coverage reports
+
+## 11. Change Management (Updated)
+
+### Data Change Detection
+- **Content Hashing**: MD5 hashing of data payloads
+- **Field-level Comparison**: Identify specific changes
+- **Versioning**: Track changes over time
+
+### Notification System
+- **WebSockets**: Real-time updates to connected clients
+- **Redis Pub/Sub**: Cross-instance communication
+- **Event Logging**: Audit trail of all changes
+
+### Change Notification Flow
+1. ETL process detects data change
+2. New data is stored in database
+3. Change notification is published to Redis
+4. WebSocket connections are updated
+5. UI reflects changes in real-time

@@ -32,7 +32,8 @@
 - **Real-time Updates** - Live data synchronization across all clients
 - **Advanced Visualizations** - Chart.js integration with custom themes
 - **Geospatial Support** - Leaflet maps with custom markers
-- **Data Integration** - ETL pipeline for DWS and municipal data sources
+- **Data Integration** - Robust ETL pipeline for DWS and Treasury data with change detection
+- **Comprehensive Testing** - Unit and integration tests with proper mocking
 - **Performance Optimized** - Efficient rendering and state management
 
 ## 🏗 System Architecture
@@ -88,6 +89,57 @@ npm run dev
 ```
 
 API will be available at http://localhost:8000; Vite dev server at http://localhost:5173.
+
+## 🧪 Testing
+
+### Unit Tests
+Run the test suite with:
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest testing/unit/test_etl_treasury.py -v
+
+# Run with coverage report
+pytest --cov=app --cov-report=term-missing
+```
+
+### Test Coverage
+- **ETL Pipeline**: Comprehensive tests for data extraction, transformation, and loading
+- **Change Detection**: Tests for detecting and notifying about data changes
+- **API Endpoints**: Tests for all critical API endpoints
+- **Frontend Components**: React component tests with React Testing Library
+
+### Mocking Strategy
+- **Database**: SQLite in-memory database for fast, isolated tests
+- **External Services**: Mocked HTTP responses and WebSocket connections
+- **Async Operations**: Properly handled with `pytest-asyncio`
+
+## 🔄 ETL Pipeline
+
+The ETL (Extract, Transform, Load) pipeline is responsible for:
+
+1. **Extracting** data from:
+   - Department of Water and Sanitation (DWS) Project Monitoring Dashboard
+   - Municipal Money API (National Treasury)
+   - Other government data sources
+
+2. **Transforming** data with:
+   - Data validation and cleaning
+   - Change detection to identify updates
+   - Data enrichment with additional context
+
+3. **Loading** data into the application database with:
+   - Efficient batch operations
+   - Transaction management
+   - Change notifications for real-time updates
+
+### Key Components
+- **MunicipalTreasuryETL**: Handles municipal financial data
+- **DWSMonitor**: Monitors DWS project data
+- **DataChangeNotifier**: Manages real-time notifications
+- **RedisPubSub**: Handles cross-instance communication
 
 ## 🎨 Design System
 
@@ -270,4 +322,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Built with 💙 for water transparency in South Africa**
-
