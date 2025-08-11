@@ -58,7 +58,7 @@ export const MunicipalityManagement: React.FC<Props> = ({
       const params = new URLSearchParams();
       if (filters.province) params.append('province', filters.province);
 
-      const response = await fetch(`/api/v1/municipalities?${params}`);
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/municipalities`);
       if (!response.ok) throw new Error('Failed to fetch municipalities');
       const data = await response.json();
       setMunicipalities(data);
@@ -70,8 +70,8 @@ export const MunicipalityManagement: React.FC<Props> = ({
   const fetchMunicipalityProjects = async (municipalityId: string) => {
     setProjectsLoading(true);
     try {
-      const response = await fetch(`/api/v1/municipalities/${municipalityId}/projects`);
-      if (!response.ok) throw new Error('Failed to fetch municipality projects');
+        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/municipalities/${municipalityId}/projects`);
+        if (!response.ok) throw new Error('Failed to fetch projects');
       const data = await response.json();
       setMunicipalityProjects(data);
     } catch (err) {

@@ -58,15 +58,10 @@ def create_app() -> FastAPI:
             redis_listener_class(app.state.redis, app.state.notifier).start_listening()
         )
 
-        # seed demo data once
-        async with async_session_factory() as session:
-            try:
-                ids = await seed_database(session)
-                app.state.demo_ids = ids
-                logger.info("Demo data seeded successfully")
-            except Exception as e:
-                logger.warning(f"Error seeding demo data: {e}")
-                app.state.demo_ids = {}
+        # Demo data seeding disabled - using real-time data only
+        # The system now relies exclusively on data from external APIs
+        app.state.demo_ids = {}  # Empty demo IDs for compatibility
+        logger.info("Demo data seeding disabled - system configured for real-time data only")
         
         # Initialize data sync services
         try:

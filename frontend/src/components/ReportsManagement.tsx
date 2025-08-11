@@ -39,7 +39,7 @@ export const ReportsManagement: React.FC<Props> = ({ projectId }) => {
       if (filters.status) params.append('status', filters.status);
       if (filters.report_type) params.append('report_type', filters.report_type);
 
-      const response = await fetch(`/api/v1/reports?${params}`);
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/reports?${params}`);
       if (!response.ok) throw new Error('Failed to fetch reports');
       const data = await response.json();
       setReports(data);
@@ -56,7 +56,7 @@ export const ReportsManagement: React.FC<Props> = ({ projectId }) => {
 
   const handleVote = async (reportId: string, voteType: 'up' | 'down') => {
     try {
-      const response = await fetch(`/api/v1/reports/${reportId}/vote?vote_type=${voteType}`, {
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/reports/${reportId}/vote?vote_type=${voteType}`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to submit vote');

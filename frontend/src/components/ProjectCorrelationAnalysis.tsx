@@ -99,7 +99,7 @@ export const ProjectCorrelationAnalysis: React.FC<Props> = ({
       try {
         if (projectId) {
           // Fetch specific project correlation
-          const response = await fetch(`/api/v1/data/correlation/projects/${projectId}`);
+          const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/correlation/projects/${projectId}`);
           if (!response.ok) throw new Error('Failed to fetch project correlation');
           const data = await response.json();
           setCorrelation(data);
@@ -107,7 +107,7 @@ export const ProjectCorrelationAnalysis: React.FC<Props> = ({
 
         if (showSummary) {
           // Fetch overall correlation summary
-          const response = await fetch('/api/v1/data/correlation/projects');
+          const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/correlation/projects`);
           if (!response.ok) throw new Error('Failed to fetch correlation summary');
           const data = await response.json();
           setCorrelationSummary(data.summary);

@@ -220,7 +220,7 @@ class MunicipalTreasuryETL:
             'NW372': 2.5, # Local municipality
             'MP311': 4.0, # City of Mbombela
             'LIM331': 1.5, # Rural municipality
-            'DEMO-001': 1.0,  # Demo municipality
+            # Removed DEMO-001 - no demo data in production system
         }
         
         multiplier = municipality_multipliers.get(municipality_code, 2.0)

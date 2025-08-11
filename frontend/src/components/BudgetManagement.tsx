@@ -70,7 +70,7 @@ export const BudgetManagement: React.FC<Props> = ({
       if (filters.financial_year) params.append('financial_year', filters.financial_year);
       if (filters.quarter) params.append('quarter', filters.quarter);
       
-      const response = await fetch(`/api/v1/budgets?${params}`);
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/budgets?${params}`);
       if (!response.ok) throw new Error('Failed to fetch budgets');
       const data = await response.json();
       setBudgets(data);
@@ -86,7 +86,7 @@ export const BudgetManagement: React.FC<Props> = ({
       const params = new URLSearchParams();
       if (selectedFinancialYear) params.append('financial_year', selectedFinancialYear);
       
-      const response = await fetch(`/api/v1/budgets/project/${projectId}/summary?${params}`);
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/budgets/project/${projectId}/summary?${params}`);
       if (!response.ok) {
         if (response.status === 404) {
           setBudgetSummary(null);
@@ -117,7 +117,7 @@ export const BudgetManagement: React.FC<Props> = ({
     setSubmitting(true);
 
     try {
-      const response = await fetch('/api/v1/budgets', {
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/budgets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -48,7 +48,7 @@ export const ETLMonitoring: React.FC = () => {
 
   const fetchETLStatus = async () => {
     try {
-      const response = await fetch('/api/v1/etl/status');
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/etl/status`);
       if (!response.ok) throw new Error('Failed to fetch ETL status');
       const data = await response.json();
       setEtlStatus(data);
@@ -59,7 +59,7 @@ export const ETLMonitoring: React.FC = () => {
 
   const fetchDataQuality = async () => {
     try {
-      const response = await fetch('/api/v1/data/stats/data-quality');
+      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/stats/data-quality`);
       if (!response.ok) throw new Error('Failed to fetch data quality stats');
       const data = await response.json();
       setDataQuality(data);
@@ -89,7 +89,7 @@ export const ETLMonitoring: React.FC = () => {
   const handleTriggerETL = async (type: 'demo' | 'dws') => {
     setTriggerLoading(type);
     try {
-      const endpoint = type === 'demo' ? '/api/v1/etl/trigger' : '/api/v1/etl/dws-sync';
+      const endpoint = type === 'demo' ? `http://${window.location.hostname}:8000/api/v1/etl/trigger` : `http://${window.location.hostname}:8000/api/v1/etl/dws-sync`;
       const response = await fetch(endpoint, { method: 'POST' });
       if (!response.ok) throw new Error(`Failed to trigger ${type} ETL`);
       

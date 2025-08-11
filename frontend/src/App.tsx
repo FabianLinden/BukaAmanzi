@@ -11,6 +11,7 @@ import { CommunityReportForm } from './components/CommunityReportForm';
 import { DataSyncDashboard } from './components/DataSyncDashboard';
 import { ProjectCorrelationAnalysis } from './components/ProjectCorrelationAnalysis';
 import { MunicipalInvestmentOverview } from './components/MunicipalInvestmentOverview';
+import { RecentActivity } from './components/RecentActivity';
 import { useWebSocket } from './hooks/useWebSocket';
 
 declare global {
@@ -523,7 +524,7 @@ export default function App() {
             )}
             
             {currentView === 'dashboard' && (
-              <Dashboard projects={projects} onViewProjectDetails={handleViewDetails} />
+              <Dashboard projects={projects} onProjectClick={handleViewDetails} />
             )}
             
             {currentView === 'data-sync' && (
@@ -594,55 +595,21 @@ export default function App() {
 
       {/* Recent Activity Section */}
       <div className="container mx-auto px-4 pb-8">
-        <div className="bg-gradient-to-br from-white to-ocean-50/60 rounded-xl shadow-lg overflow-hidden border border-water-blue-100/50">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-              {notifications.length > 0 ? (
-                notifications.map((notification: Notification, idx: number) => (
-                  <div key={idx} className="border-l-4 border-gradient-to-b from-water-blue-500 to-ocean-500 pl-4 py-2 rounded-r-lg bg-gradient-to-r from-water-blue-50/30 to-transparent hover:from-water-blue-50/50 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium text-gray-900">{notification.type}</p>
-                        {notification.data && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {JSON.stringify(notification.data, null, 2)}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                        {new Date(notification.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  <p className="mt-2">No recent activity</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <RecentActivity />
       </div>
 
       {/* Community Report Form Modal */}
-      {showReportForm && (
-        <div className="fixed inset-0 bg-gradient-to-br from-water-blue-900/40 to-ocean-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-gradient-to-br from-white to-water-blue-50/80 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-water-blue-200/50">
-            <CommunityReportForm
-              selectedProject={reportFormProject}
-              onClose={() => {
-                setShowReportForm(false);
-                setReportFormProject(null);
-              }}
-              onSubmit={handleSubmitReport}
-            />
-          </div>
-        </div>
+      {showReportForm && reportFormProject && (
+        <CommunityReportForm
+          projectId={reportFormProject.id}
+          projectName={reportFormProject.name}
+          onSubmit={handleSubmitReport}
+          onCancel={() => {
+            setShowReportForm(false);
+            setReportFormProject(null);
+          }}
+          isOpen={showReportForm}
+        />
       )}
 
       {/* Footer */}

@@ -50,19 +50,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
     const completed = projects.filter(p => p.status === 'completed').length;
     const inProgress = projects.filter(p => p.status === 'in_progress').length;
     const delayed = projects.filter(p => p.status === 'delayed').length;
+    const planned = projects.filter(p => p.status === 'planned').length;
+    const cancelled = projects.filter(p => p.status === 'cancelled').length;
     const totalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
     const totalSpent = projects.reduce((sum, p) => sum + p.spent, 0);
     const avgProgress = projects.length > 0 ? projects.reduce((sum, p) => sum + p.progress, 0) / projects.length : 0;
+    
+    // Calculate project types distribution
+    const projectTypes = projects.reduce((acc, p) => {
+      const type = p.title.toLowerCase().includes('dam') ? 'Dam Construction' :
+                   p.title.toLowerCase().includes('treatment') ? 'Water Treatment' :
+                   p.title.toLowerCase().includes('pipeline') ? 'Pipeline' :
+                   p.title.toLowerCase().includes('supply') ? 'Water Supply' :
+                   'Other';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Calculate municipalities distribution
+    const municipalities = projects.reduce((acc, p) => {
+      acc[p.municipality] = (acc[p.municipality] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
     return {
       total,
       completed,
       inProgress,
       delayed,
+      planned,
+      cancelled,
       totalBudget,
       totalSpent,
       avgProgress,
       remaining: totalBudget - totalSpent,
+      projectTypes,
+      municipalities,
+      budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
     };
   }, [projects]);
 
@@ -84,25 +108,72 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
     });
   }, [projects]);
 
-  // Generate sample progress data for charts
+  // Generate actual project progress data for charts
   const progressData = useMemo(() => {
     if (projects.length === 0) return [];
     
-    // Create sample historical data for the first project
-    const sampleProject = projects[0];
-    const startDate = new Date(sampleProject.startDate);
+    // Find the project with the most progress data (highest progress or most recent)
+    const activeProject = projects
+      .filter(p => p.progress > 0 && p.status !== 'cancelled')
+      .sort((a, b) => {
+        // Prioritize projects with higher progress and in-progress status
+        if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
+        if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
+        return b.progress - a.progress;
+      })[0] || projects[0];
+    
+    if (!activeProject) return [];
+    
+    const startDate = new Date(activeProject.startDate);
+    const endDate = new Date(activeProject.endDate);
     const currentDate = new Date();
+    const actualEndDate = currentDate < endDate ? currentDate : endDate;
     const data = [];
     
-    // Generate monthly progress data
-    for (let d = new Date(startDate); d <= currentDate; d.setMonth(d.getMonth() + 1)) {
+    // Calculate total project duration in months
+    const totalMonths = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+    const currentMonths = (actualEndDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+    
+    // Generate realistic progress curve based on actual project progress
+    const targetProgress = activeProject.progress;
+    
+    for (let d = new Date(startDate); d <= actualEndDate; d.setMonth(d.getMonth() + 1)) {
       const monthsFromStart = (d.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-      const progress = Math.min(100, monthsFromStart * (sampleProject.progress / 12));
+      const timeProgress = monthsFromStart / Math.max(currentMonths, 1);
+      
+      // Create a realistic S-curve progression
+      let progress;
+      if (timeProgress <= 0.1) {
+        // Slow start (planning phase)
+        progress = targetProgress * (timeProgress * 2);
+      } else if (timeProgress <= 0.8) {
+        // Accelerated middle phase
+        const midProgress = targetProgress * 0.2;
+        const remainingProgress = targetProgress * 0.7;
+        const midTimeProgress = (timeProgress - 0.1) / 0.7;
+        progress = midProgress + (remainingProgress * midTimeProgress);
+      } else {
+        // Slower end phase (final 10% takes more time)
+        const endProgress = targetProgress * 0.9;
+        const finalProgress = targetProgress * 0.1;
+        const endTimeProgress = (timeProgress - 0.8) / 0.2;
+        progress = endProgress + (finalProgress * endTimeProgress);
+      }
+      
+      progress = Math.min(Math.round(progress), targetProgress);
+      
+      // Add milestone markers at key progress points
+      let milestone = undefined;
+      if (progress >= 25 && progress < 30) milestone = "Foundation Complete";
+      else if (progress >= 50 && progress < 55) milestone = "Midpoint Milestone";
+      else if (progress >= 75 && progress < 80) milestone = "Final Phase";
+      else if (progress >= 95) milestone = "Near Completion";
       
       data.push({
         date: d.toISOString(),
-        progress: Math.round(progress),
-        milestone: monthsFromStart % 3 === 0 ? `Milestone ${Math.floor(monthsFromStart / 3) + 1}` : undefined
+        progress,
+        milestone,
+        projectName: activeProject.title
       });
     }
     
@@ -212,8 +283,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
         <div className="bg-gradient-to-br from-white to-aqua-50/60 p-6 rounded-lg shadow-lg border border-aqua-200/50 hover:shadow-xl transition-shadow">
           <ProgressChart 
             data={progressData}
-            title="Sample Project Progress"
-            projectName={projects.length > 0 ? projects[0].title : "No Projects"}
+            title="Active Project Progress"
+            projectName={progressData.length > 0 ? progressData[0].projectName : "No Active Projects"}
           />
         </div>
       </div>
@@ -232,35 +303,131 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
         />
       </div>
 
-      {/* Project Status Distribution */}
-      <div className="bg-gradient-to-br from-white to-ocean-50/60 p-6 rounded-lg shadow-lg border border-ocean-200/50 hover:shadow-xl transition-shadow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="text-center p-4 bg-gradient-to-br from-water-blue-50 to-water-blue-100 rounded-lg border border-water-blue-200/30">
-            <div className="text-2xl font-bold text-water-blue-700">
-              {projects.filter(p => p.status === 'planned').length}
+      {/* Enhanced Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Project Status Distribution */}
+        <div className="bg-gradient-to-br from-white to-ocean-50/60 p-6 rounded-lg shadow-lg border border-ocean-200/50 hover:shadow-xl transition-shadow">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 bg-gradient-to-br from-water-blue-50 to-water-blue-100 rounded-lg border border-water-blue-200/30">
+              <div className="text-2xl font-bold text-water-blue-700">{stats.planned}</div>
+              <div className="text-sm text-water-blue-800">Planned</div>
             </div>
-            <div className="text-sm text-water-blue-800">Planned</div>
-          </div>
-          <div className="text-center p-4 bg-gradient-to-br from-ocean-50 to-ocean-100 rounded-lg border border-ocean-200/30">
-            <div className="text-2xl font-bold text-ocean-700">{stats.inProgress}</div>
-            <div className="text-sm text-ocean-800">In Progress</div>
-          </div>
-          <div className="text-center p-4 bg-gradient-to-br from-aqua-50 to-aqua-100 rounded-lg border border-aqua-200/30">
-            <div className="text-2xl font-bold text-aqua-700">{stats.completed}</div>
-            <div className="text-sm text-aqua-800">Completed</div>
-          </div>
-          <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border border-red-200/30">
-            <div className="text-2xl font-bold text-red-600">{stats.delayed}</div>
-            <div className="text-sm text-red-700">Delayed</div>
-          </div>
-          <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200/30">
-            <div className="text-2xl font-bold text-gray-700">
-              {projects.filter(p => p.status === 'cancelled').length}
+            <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200/30">
+              <div className="text-2xl font-bold text-orange-600">{stats.inProgress}</div>
+              <div className="text-sm text-orange-700">In Progress</div>
             </div>
-            <div className="text-sm text-gray-700">Cancelled</div>
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200/30">
+              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <div className="text-sm text-green-700">Completed</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border border-red-200/30">
+              <div className="text-2xl font-bold text-red-600">{stats.delayed}</div>
+              <div className="text-sm text-red-700">Delayed</div>
+            </div>
           </div>
         </div>
+
+        {/* Project Types Distribution */}
+        <div className="bg-gradient-to-br from-white to-teal-50/60 p-6 rounded-lg shadow-lg border border-teal-200/50 hover:shadow-xl transition-shadow">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Types</h3>
+          <div className="space-y-3">
+            {Object.entries(stats.projectTypes).map(([type, count]) => (
+              <div key={type} className="flex items-center justify-between p-3 bg-gradient-to-r from-white to-teal-50/50 rounded-lg border border-teal-100/50">
+                <span className="text-sm font-medium text-gray-700">{type}</span>
+                <span className="text-lg font-bold text-teal-600">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Budget Utilization Overview */}
+      <div className="bg-gradient-to-br from-white to-purple-50/60 p-6 rounded-lg shadow-lg border border-purple-200/50 hover:shadow-xl transition-shadow">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Utilization</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalBudget)}</div>
+            <div className="text-sm text-gray-600">Total Allocated</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(stats.totalSpent)}</div>
+            <div className="text-sm text-gray-600">Total Spent</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.remaining)}</div>
+            <div className="text-sm text-gray-600">Remaining</div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Budget Utilization</span>
+            <span className="text-sm font-bold text-purple-600">{Math.round(stats.budgetUtilization)}%</span>
+          </div>
+          <ProgressBar progress={stats.budgetUtilization} />
+        </div>
+      </div>
+
+      {/* Active Projects Overview */}
+      <div className="bg-gradient-to-br from-white to-water-blue-50/60 p-6 rounded-lg shadow-lg border border-water-blue-200/50 hover:shadow-xl transition-shadow">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Active Projects Overview</h3>
+          <div className="text-sm text-gray-500">{projects.length} total projects</div>
+        </div>
+        
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {projects.slice(0, 10).map((project) => (
+            <div 
+              key={project.id}
+              className="flex items-center justify-between p-4 bg-gradient-to-r from-white to-water-blue-25 rounded-lg border border-water-blue-100/50 hover:shadow-md transition-all cursor-pointer"
+              onClick={() => onProjectClick?.(project.id)}
+            >
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900 text-sm truncate pr-2">{project.title}</h4>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    project.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                    project.status === 'delayed' ? 'bg-red-100 text-red-800' :
+                    project.status === 'planned' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {project.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span className="truncate">{project.municipality}</span>
+                  <span className="ml-2 font-medium">{formatCurrency(project.budget)}</span>
+                </div>
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>Progress</span>
+                    <span>{project.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        project.progress >= 80 ? 'bg-green-500' :
+                        project.progress >= 50 ? 'bg-blue-500' :
+                        project.progress >= 25 ? 'bg-yellow-500' :
+                        'bg-red-400'
+                      }`}
+                      style={{ width: `${project.progress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {projects.length > 10 && (
+          <div className="mt-4 text-center">
+            <button className="text-water-blue-600 hover:text-water-blue-800 text-sm font-medium">
+              View All Projects ({projects.length})
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

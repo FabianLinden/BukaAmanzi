@@ -38,7 +38,7 @@ interface MunicipalOverview {
 }
 
 interface Props {
-  municipalityId: string;
+  municipalityId?: string;
 }
 
 export const MunicipalInvestmentOverview: React.FC<Props> = ({ municipalityId }) => {
@@ -48,13 +48,18 @@ export const MunicipalInvestmentOverview: React.FC<Props> = ({ municipalityId })
 
   useEffect(() => {
     const fetchOverview = async () => {
-      if (!municipalityId) return;
+      if (!municipalityId) {
+        // If no municipality ID provided, show a selection interface or fetch a default one
+        setLoading(false);
+        setError('Please select a municipality to view investment overview');
+        return;
+      }
       
       setLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`/api/v1/data/correlation/municipalities/${municipalityId}`);
+        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/correlation/municipalities/${municipalityId}`);
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error('Municipality not found');
