@@ -93,9 +93,9 @@ class MunicipalTreasuryETL:
             # Try to fetch real data first
             try:
                 # Fetch budget data
-                budget_url = f"{self.config['base_url']}/cubes/budget_actual/facts"
+                budget_url = f"{self.config['base_url']}/cubes/incexp/facts"
                 budget_params = {
-                    'cut': f'municipality.code:"{municipality_code}"|financial_year_end.year:{financial_year}',
+                    'cut': f'municipality.demarcation_code:"{municipality_code}"|financial_year_end.year:{financial_year}',
                     'drilldown': 'item.code|financial_period.period',
                     'format': 'json'
                 }
@@ -107,7 +107,7 @@ class MunicipalTreasuryETL:
                 # Fetch capital expenditure data
                 capex_url = f"{self.config['base_url']}/cubes/capital/facts"
                 capex_params = {
-                    'cut': f'municipality.code:"{municipality_code}"|financial_year_end.year:{financial_year}',
+                    'cut': f'municipality.demarcation_code:"{municipality_code}"|financial_year_end.year:{financial_year}',
                     'drilldown': 'item.label|financial_period.period',
                     'format': 'json'
                 }

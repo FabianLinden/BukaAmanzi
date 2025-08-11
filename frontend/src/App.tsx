@@ -412,16 +412,16 @@ export default function App() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 -mt-12 relative z-10">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div className="bg-gradient-to-br from-white to-water-blue-50 rounded-xl shadow-lg overflow-hidden mb-8 border border-water-blue-100/50">
           <div className="p-6">
             {/* Tab Navigation */}
-            <div className="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 mb-6">
+            <div className="flex flex-wrap gap-1 bg-gradient-to-r from-water-blue-100/80 to-aqua-100/80 backdrop-blur-sm rounded-lg p-1 mb-6 border border-water-blue-200/30">
               <button
                 onClick={() => setCurrentView('projects')}
                 className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   currentView === 'projects'
-                    ? 'bg-white text-water-blue-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
+                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
                 }`}
               >
                 Projects
@@ -430,8 +430,8 @@ export default function App() {
                 onClick={() => setCurrentView('dashboard')}
                 className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   currentView === 'dashboard'
-                    ? 'bg-white text-water-blue-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
+                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
                 }`}
               >
                 Dashboard
@@ -440,8 +440,8 @@ export default function App() {
                 onClick={() => setCurrentView('data-sync')}
                 className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   currentView === 'data-sync'
-                    ? 'bg-white text-water-blue-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
+                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
                 }`}
               >
                 Data Sync
@@ -450,8 +450,8 @@ export default function App() {
                 onClick={() => setCurrentView('correlation')}
                 className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   currentView === 'correlation'
-                    ? 'bg-white text-water-blue-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
+                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
                 }`}
               >
                 Analysis
@@ -484,7 +484,7 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="Search projects..."
-                    className="px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-transparent"
+                    className="px-4 py-2 pr-10 rounded-lg border border-water-blue-300/60 bg-gradient-to-r from-white to-water-blue-50/80 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-water-blue-400 focus:bg-white transition-all"
                     value={searchQuery}
                     onChange={handleSearchInputChange}
                   />
@@ -544,8 +544,8 @@ export default function App() {
       {/* Notifications Panel */}
       {showNotifications && (
         <div className="fixed top-20 right-4 w-96 max-w-full z-50">
-          <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200">
-            <div className="p-4 bg-water-blue-50 border-b border-water-blue-100">
+            <div className="bg-gradient-to-br from-white to-ocean-50 rounded-xl shadow-2xl overflow-hidden border border-water-blue-200/60 backdrop-blur-md">
+              <div className="p-4 bg-gradient-to-r from-water-blue-50 to-aqua-50 border-b border-water-blue-200/50">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
                 <button
@@ -561,7 +561,7 @@ export default function App() {
             <div className="max-h-96 overflow-y-auto">
               {notifications.length > 0 ? (
                 notifications.map((notification: Notification, idx: number) => (
-                  <div key={idx} className="border-b border-gray-100 p-4 hover:bg-gray-50">
+                  <div key={idx} className="border-b border-water-blue-100/60 p-4 hover:bg-water-blue-50/50 transition-colors">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{notification.type}</p>
@@ -594,13 +594,13 @@ export default function App() {
 
       {/* Recent Activity Section */}
       <div className="container mx-auto px-4 pb-8">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-br from-white to-ocean-50/60 rounded-xl shadow-lg overflow-hidden border border-water-blue-100/50">
           <div className="p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
               {notifications.length > 0 ? (
                 notifications.map((notification: Notification, idx: number) => (
-                  <div key={idx} className="border-l-4 border-water-blue-500 pl-4 py-2">
+                  <div key={idx} className="border-l-4 border-gradient-to-b from-water-blue-500 to-ocean-500 pl-4 py-2 rounded-r-lg bg-gradient-to-r from-water-blue-50/30 to-transparent hover:from-water-blue-50/50 transition-colors">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium text-gray-900">{notification.type}</p>
@@ -631,8 +631,8 @@ export default function App() {
 
       {/* Community Report Form Modal */}
       {showReportForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-gradient-to-br from-water-blue-900/40 to-ocean-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gradient-to-br from-white to-water-blue-50/80 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-water-blue-200/50">
             <CommunityReportForm
               selectedProject={reportFormProject}
               onClose={() => {
@@ -646,7 +646,7 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-12">
+      <footer className="bg-gradient-to-r from-water-blue-900 via-ocean-900 to-water-blue-800 text-white py-8 mt-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">

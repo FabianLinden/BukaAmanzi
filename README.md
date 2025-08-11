@@ -32,7 +32,8 @@
 - **Real-time Updates** - Live data synchronization across all clients
 - **Advanced Visualizations** - Chart.js integration with custom themes
 - **Geospatial Support** - Leaflet maps with custom markers
-- **Data Integration** - Robust ETL pipeline for DWS and Treasury data with change detection
+- **Advanced ETL Manager** - Production-ready ETL system with job queuing, retry logic, and health monitoring
+- **Data Integration** - Comprehensive pipeline for DWS and Treasury data with correlation analysis
 - **Comprehensive Testing** - Unit and integration tests with proper mocking
 - **Performance Optimized** - Efficient rendering and state management
 
@@ -118,28 +119,53 @@ pytest --cov=app --cov-report=term-missing
 
 ## 🔄 ETL Pipeline
 
-The ETL (Extract, Transform, Load) pipeline is responsible for:
+### **Production-Ready ETL Manager**
+The new ETL Manager provides enterprise-grade data processing with:
+
+- **Job Queue Management** - Async job processing with priority queues
+- **Worker Pool System** - Concurrent job execution with configurable worker count
+- **Retry Logic** - Automatic retry for failed jobs with exponential backoff
+- **Health Monitoring** - Real-time status tracking and performance metrics
+- **Error Handling** - Comprehensive error logging and notification system
+- **Job Status API** - REST endpoints for job monitoring and control
+
+### **ETL Data Sources**
 
 1. **Extracting** data from:
    - Department of Water and Sanitation (DWS) Project Monitoring Dashboard
-   - Municipal Money API (National Treasury)
-   - Other government data sources
+   - Municipal Money API (National Treasury) - Financial and budget data
+   - Cross-referenced correlation analysis between projects and municipal finances
 
 2. **Transforming** data with:
    - Data validation and cleaning
-   - Change detection to identify updates
-   - Data enrichment with additional context
+   - Change detection using content hashing
+   - Financial correlation analysis (project costs vs municipal budgets)
+   - Data enrichment with geospatial and contextual information
 
 3. **Loading** data into the application database with:
-   - Efficient batch operations
-   - Transaction management
-   - Change notifications for real-time updates
+   - Transactional batch operations
+   - Upsert operations to handle updates
+   - Real-time change notifications via WebSocket
+   - Data quality metrics and completeness tracking
 
-### Key Components
-- **MunicipalTreasuryETL**: Handles municipal financial data
-- **DWSMonitor**: Monitors DWS project data
-- **DataChangeNotifier**: Manages real-time notifications
-- **RedisPubSub**: Handles cross-instance communication
+### **ETL Job Types**
+- **DWS Sync** - Water infrastructure project data extraction and processing
+- **Treasury Sync** - Municipal financial data extraction with fallback to mock data
+- **Correlation Analysis** - Cross-reference project costs with municipal financial capacity
+
+### **Key Components**
+- **ETLManager**: Production job orchestration with worker pools and queuing
+- **EnhancedDWSMonitor**: Advanced DWS data extraction with change detection
+- **MunicipalTreasuryETL**: Municipal financial data processing with API fallbacks
+- **DataCorrelationService**: Project-finance correlation analysis and insights
+- **DataChangeNotifier**: Real-time notification system for data updates
+
+### **ETL Monitoring & Control**
+Access the ETL system via the frontend "Data Sync" tab or API endpoints:
+- **Manager Status**: Real-time ETL worker status and job metrics
+- **Manual Triggers**: On-demand job execution for specific data sources
+- **Data Quality Dashboard**: Live metrics on data completeness and source health
+- **Job History**: Track successful syncs and error details
 
 ## 🎨 Design System
 
@@ -233,7 +259,7 @@ Buka-Amanzi-3.0/
 │   │   ├── db/                           # session.py, models.py, seed.py
 │   │   ├── etl/                          # dws.py, treasury.py (data ingestion)
 │   │   ├── realtime/                     # notifier.py (Redis pub/sub + WS)
-│   │   ├── services/                     # change_detection, data_correlation, data_scheduler
+│   │   ├── services/                     # change_detection, data_correlation, data_scheduler, etl_manager
 │   │   ├── utils/                         # logger, helpers
 │   │   ├── main.py                        # FastAPI app factory + startup/shutdown
 │   │   └── websocket.py                   # WebSocket routes
@@ -300,8 +326,13 @@ The API is fully documented with OpenAPI/Swagger:
 - GET /api/v1/projects — List projects with filtering, pagination
 - GET /api/v1/municipalities — List municipalities and stats
 - POST /api/v1/reports — Submit community reports
-- POST /api/v1/data/sync/trigger — Trigger manual data sync
-- GET /api/v1/data/scheduler/status — Scheduler health and stats
+- POST /api/v1/etl/sync — Trigger ETL sync jobs (DWS, Treasury, Correlation)
+- GET /api/v1/etl/manager/status — ETL Manager status and metrics
+- POST /api/v1/etl/manager/start — Start ETL Manager
+- POST /api/v1/etl/manager/stop — Stop ETL Manager
+- GET /api/v1/data/stats/data-quality — Data quality and completeness metrics
+- GET /api/v1/data/correlation/projects/{id} — Project financial correlation analysis
+- GET /api/v1/data/correlation/municipalities/{id} — Municipal investment overview
 - WS /ws/projects — Real-time project updates (subscribe per entity or all)
 
 ## 🤝 Contributing

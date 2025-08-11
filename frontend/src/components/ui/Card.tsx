@@ -9,7 +9,7 @@ interface CardProps {
 export const Card = ({ children, className = '', hoverEffect = false }: CardProps) => {
   return (
     <div 
-      className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${hoverEffect ? 'hover:shadow-lg hover:-translate-y-1' : ''} ${className}`}
+      className={`bg-gradient-to-br from-white to-water-blue-50/60 rounded-xl shadow-md overflow-hidden transition-all duration-300 border border-water-blue-200/50 ${hoverEffect ? 'hover:shadow-xl hover:-translate-y-1 hover:border-water-blue-300/60' : ''} ${className}`}
     >
       <div className="p-6">
         {children}
@@ -51,7 +51,7 @@ interface CardFooterProps {
 }
 
 export const CardFooter = ({ children, className = '' }: CardFooterProps) => (
-  <div className={`mt-6 pt-4 border-t border-gray-100 ${className}`}>
+  <div className={`mt-6 pt-4 border-t border-water-blue-100/60 ${className}`}>
     {children}
   </div>
 );

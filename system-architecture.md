@@ -4,11 +4,12 @@
 
 **Buka Amanzi 3.0** is a production-ready, full-stack community transparency platform for monitoring water infrastructure projects across South Africa. This comprehensive system integrates real-time data from multiple government sources, provides sophisticated analytics, and delivers an immersive user experience through custom water-themed animations and visualizations.
 
-### System Highlights ✅
-- **Real-time Data Integration**: Automated ETL pipelines from DWS and Treasury sources
+### System Highlights ✓
+- **Production ETL Manager**: Enterprise-grade ETL system with job queuing, retry logic, and health monitoring
+- **Real-time Data Integration**: Automated ETL pipelines from DWS and Treasury sources with correlation analysis
 - **Advanced Water-Themed UI**: 12+ custom CSS animations with canvas-based effects
 - **WebSocket Real-time Updates**: Live project status and financial data synchronization
-- **Intelligent Data Correlation**: Cross-reference project budgets with municipal finances
+- **Intelligent Financial Correlation**: Cross-reference project budgets with municipal financial capacity
 - **Interactive Visualizations**: Charts.js integration with custom themes and Leaflet maps
 - **Community Engagement**: Public reporting system with moderation capabilities
 - **Performance Optimized**: Efficient state management, caching, and responsive design
@@ -335,6 +336,96 @@ graph TB
     class PROJECT_CRUD,MUNICIPALITY_CRUD,REPORT_CRUD,ETL_SERVICE,NOTIFICATION_SERVICE,GEO_SERVICE business
     class PROJECT_MODEL,MUNICIPALITY_MODEL,REPORT_MODEL,CHANGELOG_MODEL,SQLITE,REDIS_CACHE data
     class DWS_CONNECTOR,MUNICIPAL_CONNECTOR external
+```
+
+## 🔄 Advanced ETL Manager Architecture
+
+```mermaid
+graph TB
+    subgraph "ETL Manager System"
+        ETL_MGR[⚙️ ETL Manager<br/>- Job orchestration<br/>- Worker pool management<br/>- Health monitoring]
+        
+        subgraph "Job Queue System"
+            JOB_QUEUE[📥 Job Queue<br/>- Priority queuing<br/>- Job scheduling<br/>- Retry management]
+            WORKER_POOL[👷 Worker Pool<br/>- Async job execution<br/>- Concurrent processing<br/>- Load balancing]
+            JOB_STATUS[📊 Job Status<br/>- Status tracking<br/>- Progress monitoring<br/>- Error logging]
+        end
+        
+        subgraph "ETL Job Types"
+            DWS_JOB[🏛️ DWS Sync Job<br/>- Project data extraction<br/>- Content hash comparison<br/>- Change detection]
+            TREASURY_JOB[💰 Treasury Sync Job<br/>- Financial data extraction<br/>- Mock data fallback<br/>- Municipal data processing]
+            CORRELATION_JOB[📊 Correlation Analysis<br/>- Project-finance correlation<br/>- Investment analysis<br/>- Risk assessment]
+        end
+    end
+    
+    subgraph "ETL Data Processing"
+        subgraph "Enhanced ETL Components"
+            DWS_MONITOR[🏛️ Enhanced DWS Monitor<br/>- Advanced scraping<br/>- Rate limiting<br/>- Error handling]
+            TREASURY_ETL[💰 Municipal Treasury ETL<br/>- API integration<br/>- Data transformation<br/>- Fallback mechanisms]
+            CORRELATION_SERVICE[📊 Correlation Service<br/>- Financial analysis<br/>- Investment insights<br/>- Risk indicators]
+        end
+        
+        subgraph "Data Quality Management"
+            CHANGE_DETECTION[🔍 Change Detection<br/>- Content hashing<br/>- Delta identification<br/>- Update tracking]
+            DATA_VALIDATION[✅ Data Validation<br/>- Schema verification<br/>- Quality checks<br/>- Integrity validation]
+            METRICS_TRACKING[📈 Metrics Tracking<br/>- Completeness metrics<br/>- Source health<br/>- Performance stats]
+        end
+    end
+    
+    subgraph "API Integration Layer"
+        ETL_API[🔌 ETL API Endpoints<br/>- Job triggering<br/>- Status monitoring<br/>- Manager control]
+        DATA_QUALITY_API[📊 Data Quality API<br/>- Quality metrics<br/>- Completeness stats<br/>- Health indicators]
+        CORRELATION_API[📊 Correlation API<br/>- Project analysis<br/>- Municipal overview<br/>- Investment insights]
+    end
+    
+    subgraph "Frontend Integration"
+        DATA_SYNC_DASHBOARD[📊 Data Sync Dashboard<br/>- ETL manager status<br/>- Manual job triggers<br/>- Data quality metrics]
+        ETL_MONITORING[📈 ETL Monitoring<br/>- Job status tracking<br/>- Performance metrics<br/>- Error reporting]
+    end
+    
+    %% Connections
+    ETL_MGR --> JOB_QUEUE
+    ETL_MGR --> WORKER_POOL
+    ETL_MGR --> JOB_STATUS
+    
+    JOB_QUEUE --> DWS_JOB
+    JOB_QUEUE --> TREASURY_JOB
+    JOB_QUEUE --> CORRELATION_JOB
+    
+    WORKER_POOL --> DWS_MONITOR
+    WORKER_POOL --> TREASURY_ETL
+    WORKER_POOL --> CORRELATION_SERVICE
+    
+    DWS_JOB --> DWS_MONITOR
+    TREASURY_JOB --> TREASURY_ETL
+    CORRELATION_JOB --> CORRELATION_SERVICE
+    
+    DWS_MONITOR --> CHANGE_DETECTION
+    TREASURY_ETL --> DATA_VALIDATION
+    CORRELATION_SERVICE --> METRICS_TRACKING
+    
+    ETL_MGR --> ETL_API
+    METRICS_TRACKING --> DATA_QUALITY_API
+    CORRELATION_SERVICE --> CORRELATION_API
+    
+    ETL_API --> DATA_SYNC_DASHBOARD
+    DATA_QUALITY_API --> DATA_SYNC_DASHBOARD
+    CORRELATION_API --> ETL_MONITORING
+    
+    %% Styling
+    classDef manager fill:#e8f5e8,stroke:#388e3c,stroke-width:3px
+    classDef jobs fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef etl fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef quality fill:#fff8e1,stroke:#f57c00,stroke-width:2px
+    classDef api fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef frontend fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    
+    class ETL_MGR manager
+    class JOB_QUEUE,WORKER_POOL,JOB_STATUS,DWS_JOB,TREASURY_JOB,CORRELATION_JOB jobs
+    class DWS_MONITOR,TREASURY_ETL,CORRELATION_SERVICE etl
+    class CHANGE_DETECTION,DATA_VALIDATION,METRICS_TRACKING quality
+    class ETL_API,DATA_QUALITY_API,CORRELATION_API api
+    class DATA_SYNC_DASHBOARD,ETL_MONITORING frontend
 ```
 
 ## 🎨 Animation & Theme System

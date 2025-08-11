@@ -74,6 +74,14 @@ def create_app() -> FastAPI:
             logger.info("Data sync services initialized")
         except Exception as e:
             logger.error(f"Error initializing data sync services: {e}")
+            
+        # Initialize ETL manager
+        try:
+            from app.api.v1.endpoints.etl import initialize_etl_manager
+            initialize_etl_manager(app.state.notifier)
+            logger.info("ETL Manager initialized")
+        except Exception as e:
+            logger.error(f"Error initializing ETL manager: {e}")
 
     @app.on_event("shutdown")
     async def on_shutdown() -> None:

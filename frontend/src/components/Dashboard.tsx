@@ -124,13 +124,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
     <div className="space-y-6">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-water-blue-50 p-6 rounded-lg shadow-lg border border-water-blue-200/50 hover:shadow-xl transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Projects</p>
               <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-water-blue-100 to-water-blue-200 rounded-full">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -138,13 +138,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-ocean-50/80 p-6 rounded-lg shadow-lg border border-ocean-200/50 hover:shadow-xl transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">In Progress</p>
               <p className="text-3xl font-bold text-yellow-600">{stats.inProgress}</p>
             </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-ocean-100 to-ocean-200 rounded-full">
               <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -152,13 +152,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-aqua-50/80 p-6 rounded-lg shadow-lg border border-aqua-200/50 hover:shadow-xl transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Completed</p>
               <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-aqua-100 to-aqua-200 rounded-full">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -166,13 +166,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-teal-50/80 p-6 rounded-lg shadow-lg border border-teal-200/50 hover:shadow-xl transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Budget</p>
               <p className="text-3xl font-bold text-purple-600">{formatCurrency(stats.totalBudget)}</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full">
               <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
@@ -182,7 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
       </div>
 
       {/* Average Progress */}
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-gradient-to-br from-white to-water-blue-50/60 p-6 rounded-lg shadow-lg border border-water-blue-200/50 hover:shadow-xl transition-shadow">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Overall Progress</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
       {/* Charts and Map */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Budget Overview */}
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-ocean-50/60 p-6 rounded-lg shadow-lg border border-ocean-200/50 hover:shadow-xl transition-shadow">
           <BudgetChart 
             data={{
               allocated: stats.totalBudget,
@@ -209,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
         </div>
 
         {/* Progress Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-white to-aqua-50/60 p-6 rounded-lg shadow-lg border border-aqua-200/50 hover:shadow-xl transition-shadow">
           <ProgressChart 
             data={progressData}
             title="Sample Project Progress"
@@ -219,7 +219,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
       </div>
 
       {/* Project Locations Map */}
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-gradient-to-br from-white to-water-blue-50/60 p-6 rounded-lg shadow-lg border border-water-blue-200/50 hover:shadow-xl transition-shadow">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Locations</h3>
         <ProjectMap 
           projects={mapProjects}
@@ -233,29 +233,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
       </div>
 
       {/* Project Status Distribution */}
-      <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-gradient-to-br from-white to-ocean-50/60 p-6 rounded-lg shadow-lg border border-ocean-200/50 hover:shadow-xl transition-shadow">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="text-center p-4 bg-gradient-to-br from-water-blue-50 to-water-blue-100 rounded-lg border border-water-blue-200/30">
+            <div className="text-2xl font-bold text-water-blue-700">
               {projects.filter(p => p.status === 'planned').length}
             </div>
-            <div className="text-sm text-purple-700">Planned</div>
+            <div className="text-sm text-water-blue-800">Planned</div>
           </div>
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
-            <div className="text-sm text-yellow-700">In Progress</div>
+          <div className="text-center p-4 bg-gradient-to-br from-ocean-50 to-ocean-100 rounded-lg border border-ocean-200/30">
+            <div className="text-2xl font-bold text-ocean-700">{stats.inProgress}</div>
+            <div className="text-sm text-ocean-800">In Progress</div>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-            <div className="text-sm text-green-700">Completed</div>
+          <div className="text-center p-4 bg-gradient-to-br from-aqua-50 to-aqua-100 rounded-lg border border-aqua-200/30">
+            <div className="text-2xl font-bold text-aqua-700">{stats.completed}</div>
+            <div className="text-sm text-aqua-800">Completed</div>
           </div>
-          <div className="text-center p-4 bg-red-50 rounded-lg">
+          <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border border-red-200/30">
             <div className="text-2xl font-bold text-red-600">{stats.delayed}</div>
             <div className="text-sm text-red-700">Delayed</div>
           </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-600">
+          <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200/30">
+            <div className="text-2xl font-bold text-gray-700">
               {projects.filter(p => p.status === 'cancelled').length}
             </div>
             <div className="text-sm text-gray-700">Cancelled</div>
