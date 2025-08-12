@@ -213,7 +213,9 @@ Access the ETL system via the frontend "Data Sync" tab or API endpoints:
 
 ### **Project Management**
 - 📋 **Project Cards** - Detailed project information with progress bars
-- 🔍 **Advanced Search** - Multi-field search and filtering
+- 🔍 **Advanced Search & Filtering** - Comprehensive search with multiple criteria (text, status, municipality, project type, progress range, budget range)
+- 📊 **Smart Results Display** - Projects grouped by municipality with quick stats
+- 🔄 **API-Powered Search** - Server-side filtering for efficient data retrieval
 - 📱 **Responsive Design** - Optimized for all device sizes
 - 🔄 **Real-time Updates** - Live project status changes
 - 📊 **Progress Visualization** - Visual progress indicators
@@ -247,10 +249,14 @@ Buka-Amanzi-3.0/
 │   │   │   ├── WaterBubbles.tsx          # Bubble effects component
 │   │   │   ├── Dashboard.tsx             # Analytics dashboard (charts + map)
 │   │   │   ├── ProjectCard.tsx           # Project card UI
+│   │   │   ├── ProjectsView.tsx          # Original projects view (client-side search)
+│   │   │   ├── EnhancedProjectsView.tsx  # Advanced projects view (server-side search)
+│   │   │   ├── AdvancedProjectSearch.tsx # Advanced search component with filters
 │   │   │   ├── CommunityReportForm.tsx   # Community reporting UI
 │   │   │   └── ...
 │   │   ├── hooks/
-│   │   │   └── useWebSocket.ts           # Reusable WebSocket hook (auto-reconnect)
+│   │   │   ├── useWebSocket.ts           # Reusable WebSocket hook (auto-reconnect)
+│   │   │   └── useProjectSearch.ts       # Project search API integration hook
 │   │   ├── App.tsx                       # App shell, tabs, notifications, WS wiring
 │   │   └── main.tsx                      # Vite entrypoint
 │   └── tailwind.config.js                # Water color palette + animation keyframes
@@ -330,9 +336,33 @@ The API is fully documented with OpenAPI/Swagger:
 ### Key Endpoints (v1)
 
 #### Core Data Endpoints
-- GET /api/v1/projects — List projects with filtering, pagination
+- GET /api/v1/projects — List projects with advanced filtering and pagination
 - GET /api/v1/municipalities — List municipalities and stats
 - POST /api/v1/reports — Submit community reports
+
+##### Advanced Project Search Parameters
+```bash
+# Text search (searches name, description, contractor)
+GET /api/v1/projects/?search=water treatment
+
+# Filter by status
+GET /api/v1/projects/?status=in_progress
+
+# Filter by municipality
+GET /api/v1/projects/?municipality_id=uuid-here
+
+# Filter by project type
+GET /api/v1/projects/?project_type=water_treatment
+
+# Filter by progress range (0-100)
+GET /api/v1/projects/?min_progress=25&max_progress=75
+
+# Pagination
+GET /api/v1/projects/?page=2&limit=50
+
+# Combined example
+GET /api/v1/projects/?search=berg river&status=in_progress&min_progress=50&limit=25
+```
 
 #### ETL Management
 - POST /api/v1/etl/sync — Trigger ETL sync jobs (DWS, Treasury, Correlation)

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectDetails } from './components/ProjectDetails';
 import { ProjectsView } from './components/ProjectsView';
+import { EnhancedProjectsView } from './components/EnhancedProjectsView';
 import { WaterWave } from './components/WaterWave';
 import { WaterBubbles } from './components/WaterBubbles';
 import { WaterDroplet } from './components/WaterDroplet';
@@ -188,6 +189,7 @@ export default function App() {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportFormProject, setReportFormProject] = useState<{ id: string; name: string } | null>(null);
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(null);
+  const [useAdvancedSearch, setUseAdvancedSearch] = useState<boolean>(true);
   
   const {
     notifications,
@@ -551,7 +553,20 @@ export default function App() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                {(currentView === 'projects' || currentView === 'dashboard') && (
+                {currentView === 'projects' && (
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={useAdvancedSearch}
+                        onChange={(e) => setUseAdvancedSearch(e.target.checked)}
+                        className="rounded border-gray-300 text-water-blue-600 shadow-sm focus:border-water-blue-300 focus:ring focus:ring-water-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Advanced search</span>
+                    </label>
+                  </div>
+                )}
+                {(currentView === 'projects' || currentView === 'dashboard') && !useAdvancedSearch && (
                   <div className="flex items-center space-x-2">
                     <label className="flex items-center">
                       <input
@@ -564,20 +579,22 @@ export default function App() {
                     </label>
                   </div>
                 )}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search projects..."
-                    className="px-4 py-2 pr-10 rounded-lg border border-water-blue-300/60 bg-gradient-to-r from-white to-water-blue-50/80 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-water-blue-400 focus:bg-white transition-all"
-                    value={searchQuery}
-                    onChange={handleSearchInputChange}
-                  />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                {!useAdvancedSearch && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search projects..."
+                      className="px-4 py-2 pr-10 rounded-lg border border-water-blue-300/60 bg-gradient-to-r from-white to-water-blue-50/80 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-water-blue-400 focus:bg-white transition-all"
+                      value={searchQuery}
+                      onChange={handleSearchInputChange}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                )}
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative p-2 rounded-full hover:bg-water-blue-100 text-water-blue-700 focus:outline-none focus:ring-2 focus:ring-water-blue-500"
@@ -596,14 +613,22 @@ export default function App() {
             </div>
 
             {currentView === 'projects' && (
-              <ProjectsView 
-                projects={displayedProjects}
-                searchQuery={searchQuery}
-                onViewDetails={handleViewDetails}
-                onProvideFeedback={handleProvideFeedback}
-                onShowReportForm={() => setShowReportForm(true)}
-                onClearSearch={() => setSearchQuery('')}
-              />
+              useAdvancedSearch ? (
+                <EnhancedProjectsView 
+                  onViewDetails={handleViewDetails}
+                  onProvideFeedback={handleProvideFeedback}
+                  onShowReportForm={() => setShowReportForm(true)}
+                />
+              ) : (
+                <ProjectsView 
+                  projects={displayedProjects}
+                  searchQuery={searchQuery}
+                  onViewDetails={handleViewDetails}
+                  onProvideFeedback={handleProvideFeedback}
+                  onShowReportForm={() => setShowReportForm(true)}
+                  onClearSearch={() => setSearchQuery('')}
+                />
+              )
             )}
             
             {currentView === 'dashboard' && (
