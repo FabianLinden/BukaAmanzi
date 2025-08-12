@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <link href="/pmd/DXR.axd?r=0_1204,1_66,1_67,1_68,0_1208,0_2662,0_2667,1_205,0_1060,0_1055-22mkn" rel="stylesheet" type="text/css"/>
+  <meta charset="utf-8"/>
+  <title>
+   DWS Project Dashboard
+  </title>
+  <meta content="width=device-width, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0" name="viewport"/>
+  <link href="LG_Content/Content.css" rel="stylesheet" type="text/css"/>
+  <link href="LG_Content/Layout.css" rel="stylesheet" type="text/css"/>
+  <script src="LG_Content/Script.js" type="text/javascript">
+  </script>
+  <script src="LG_Content/cookieconcent.js" type="text/javascript">
+  </script>
+  <link href="leaflet/leaflet.css" rel="stylesheet"/>
+  <script src="leaflet/leaflet.js">
+  </script>
+  <script src="Scripts/jquery-3.4.1.min.js" type="text/javascript">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js">
+  </script>
+  <script src="Scripts/Duplicate.js" type="text/javascript">
+  </script>
+  <script type="text/javascript">
+   $(document).ready(function () {
+            if (window.IsDuplicate()) {
+                swal("Oops", "This is a duplicate window\n\n Please close this window/tab...", "error");
+                window.close();
+            }
+        });
+        function OnItemClick(s, e) {
+            if (e.item.name.startsWith("MenuLogin")) {
+                e.processOnServer = false;
+                pcLogin.Show();
+            }
+            if (e.item.name.startsWith("MenuOnlyLinked")) {
+                e.processOnServer = false;
+                popupControlLinkedAreSure.Show();
+            }
+        }
+
+        // Create cookie
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        // Delete cookie
+        function deleteCookie(cname) {
+            const d = new Date();
+            d.setTime(d.getTime() + (24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=;" + expires + ";path=/";
+        }
+
+        // Read cookie
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        // Set cookie consent
+        function acceptCookieConsent() {
+            deleteCookie('pmd_user_cookie_consent');
+            setCookie('pmd_user_cookie_consent', 1, 30);
+            document.getElementById("cookieNotice").style.display = "none";
+        }
+        // Set cookie consent
+        function rejectCookieConsent() {
+            deleteCookie('pmd_user_cookie_consent');
+            setCookie('pmd_user_cookie_consent', 0, 30);
+            document.getElementById("cookieNotice").style.display = "none";
+        }
+  </script>
+ </head>
+ <body data-resource-set="Resources">
+  <form action="./level.aspx" class="form" id="aspnetForm" method="post">
+   <div class="aspNetHidden">
+    <input id="__EVENTTARGET" name="__EVENTTARGET" type="hidden" value=""/>
+    <input id="__EVENTARGUMENT" name="__EVENTARGUMENT" type="hidden" value=""/>
+    <input id="__VIEWSTATE" name="__VIEWSTATE" type="hidden" value="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"/>
+   </div>
+   <script type="text/javascript">
+    //<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+   </script>
+   <script src="/pmd/WebResource.axd?d=3I6iDoAK_iEp0ivLCiqT8AW9M5Matsi_eHE1TlqAd3SZbkEx3GpR-KWFqWRJlthLWjGJn8bhEo_-RwPCO9EmMuoCb09tl69aTBnYlcD-x-I1&amp;t=638563344220000000" type="text/javascript">
+   </script>
+   <div class="aspNetHidden">
+    <input id="__VIEWSTATEGENERATOR" name="__VIEWSTATEGENERATOR" type="hidden" value="CFA6FC39"/>
+    <input id="__VIEWSTATEENCRYPTED" name="__VIEWSTATEENCRYPTED" type="hidden" value=""/>
+    <input id="__EVENTVALIDATION" name="__EVENTVALIDATION" type="hidden" value="Gs4ogayi1uk0xir7ouNmf4izn1vr5Atu3UvgPmVrX2mFIPDC6cgQkuTpjB65aJ7Vl3KS0nW7QTcR8T9FOWBI2c2flLhyTYAW+M1Zyd6BEyYPrDc3seBjSPkzPP7oYEIDfSAQ1ICw24xIQAJNm9c0q8hHWR7VDFRga6ohmBLeD6cK4fvZ9bm+jbi5yPdKGHPZyyjLk6VIcEhrYQ02Djm2SQ=="/>
+   </div>
+   <script id="dxis_50737405" src="/pmd/DXR.axd?r=1_10,1_11,1_22,1_62,1_12,1_13,1_14,1_47,1_16,1_23,1_32,1_45,1_40,1_179,1_185,1_8,1_34,1_41,1_178,1_7-12mkn" type="text/javascript">
+   </script>
+   <div class="dxpnlControl_Glass app-header dxpnl-edge t" id="ctl00_HeaderPanel" style="z-index:1009;">
+    <div class="headerTop">
+     <div class="templateTitle">
+      <a href="default.aspx" id="ctl00_HeaderPanel_TitleLink">
+       <img alt="Department of Water Affairs" height="92" id="imgLogo" src="/pmd/images/Jpegs/DWALogo.png" width="281"/>
+      </a>
+     </div>
+     <div class="templateFlag">
+      <img height="80" id="imgSAFlag" src="/pmd/images/Jpegs/saflag.png" width="121"/>
+     </div>
+    </div>
+    <hr class="hrheader"/>
+    <div class="left-block">
+     <div class="dxmLite_Glass dxm-ltr">
+      <div class="dxm-main dxm-horizontal dxm-noWrap header-menu" id="ctl00_HeaderPanel_LeftAreaMenu" style="width:100%;">
+       <ul class="dx dxm-image-l">
+        <li class="dxm-item item toggle-item vertically-aligned">
+         <div class="dxm-content dxm-valign" style="vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="LG_Content/Images/menu.svg" style="height:18px;width:18px;"/>
+         </div>
+        </li>
+        <li class="dxm-spacing">
+        </li>
+        <li class="dxm-item item image-item vertically-aligned" title="System Homepage Introduction and Data Summary">
+         <a class="dxm-content dx dxm-valign" href="index.aspx" style="vertical-align:middle;" title="System Homepage Introduction and Data Summary">
+          <img alt="" class="header-logo dxm-image dx-vam" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </a>
+        </li>
+        <li class="dxm-spacing">
+        </li>
+       </ul>
+      </div>
+      <b class="dx-clear">
+      </b>
+     </div>
+     <script id="dxss_791835509" type="text/javascript">
+      <!--
+ASPx.AddHoverItems('ctl00_HeaderPanel_LeftAreaMenu',[[[''],[''],['DXI0_','DXI2_'],['','T']]]);
+ASPx.AddSelectedItems('ctl00_HeaderPanel_LeftAreaMenu',[[['dxm-checked checked selected',''],['',''],['DXI0_'],['','T']]]);
+ASPx.AddDisabledItems('ctl00_HeaderPanel_LeftAreaMenu',[[['dxm-disabled'],[''],['DXI0_','DXI2_'],['','T']]]);
+ASPx.createControl(ASPxClientMenu,'ctl00_HeaderPanel_LeftAreaMenu','leftAreaMenu',{'uniqueID':'ctl00$HeaderPanel$LeftAreaMenu','renderData':{'':[[0],[2]]},'rootSubMenuFIXOffset':-1,'rootSubMenuFIYOffset':-2,'rootSubMenuLIXOffset':-1,'rootSubMenuLIYOffset':-2,'rootSubMenuXOffset':-1,'rootSubMenuYOffset':-2,'allowCheckItems':true,'checkedState':'','itemCheckedGroups':[['0']]},{'ItemClick':onLeftMenuItemClick},null,{'items':[{'name':'ToggleLeftPanel'},{'visible':false,'name':'Back'},{}]});
+
+//-->
+     </script>
+    </div>
+    <div class="right-block">
+     <div class="dxmLite_Glass dxm-ltr">
+      <div class="dxm-main dxm-horizontal dxm-noWrap header-menu" id="ctl00_HeaderPanel_RightAreaMenu" style="width:100%;">
+       <ul class="dx dxm-image-l">
+        <li class="dxm-item item toggle-item vertically-aligned">
+         <div class="dxm-content dxm-valign" style="vertical-align:middle;">
+          <img alt="" class="image dxm-image dx-vam" src="/pmd/DXR.axd?r=1_85-12mkn" style="height:18px;"/>
+         </div>
+        </li>
+        <li class="dxm-spacing">
+        </li>
+       </ul>
+      </div>
+      <b class="dx-clear">
+      </b>
+     </div>
+     <script id="dxss_1581599403" type="text/javascript">
+      <!--
+ASPx.AddHoverItems('ctl00_HeaderPanel_RightAreaMenu',[[['dxm-hovered',''],['',''],['DXI0_'],['','T']]]);
+ASPx.AddSelectedItems('ctl00_HeaderPanel_RightAreaMenu',[[['dxm-checked checked selected',''],['',''],['DXI0_'],['','T']]]);
+ASPx.AddDisabledItems('ctl00_HeaderPanel_RightAreaMenu',[[['dxm-disabled'],[''],['DXI0_'],['','T']]]);
+ASPx.createControl(ASPxClientMenu,'ctl00_HeaderPanel_RightAreaMenu','rightAreaMenu',{'uniqueID':'ctl00$HeaderPanel$RightAreaMenu','serverEvents':['ItemClick'],'renderData':{'':[[0]]},'rootSubMenuFIXOffset':-1,'rootSubMenuFIYOffset':-2,'rootSubMenuLIXOffset':-1,'rootSubMenuLIYOffset':-2,'rootSubMenuXOffset':-1,'rootSubMenuYOffset':-2,'allowCheckItems':true,'checkedState':'','itemCheckedGroups':[['0']]},{'ItemClick':onRightMenuItemClick},null,{'items':[{'name':'ToggleRightPanel'}]});
+
+//-->
+     </script>
+    </div>
+    <div class="menu-container">
+     <div style="width:100%;">
+      <table style="width: 100%;height: 46px;">
+       <tr>
+        <td style="width: 90%; text-align: center;">
+         <span class="PageSiteHeading" style="padding: 0px; margin: 0px;">
+          Water Services Planning Support: DWS Project Monitoring Dashboard (PMD)
+         </span>
+        </td>
+       </tr>
+      </table>
+     </div>
+    </div>
+    <div class="dx-clear">
+    </div>
+   </div>
+   <script id="dxss_603182058" type="text/javascript">
+    <!--
+ASPx.createControl(ASPxClientPanel,'ctl00_HeaderPanel','headerPanel',{'uniqueID':'ctl00$HeaderPanel','fixedPositionOverlap':true});
+
+//-->
+   </script>
+   <div class="dxpnl-bar dxpnl-edge l dxpnlControl_Glass left-panel expand-bar" id="ctl00_LeftPanel_EB" style="padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;">
+   </div>
+   <div class="dxpnl-modal" id="ctl00_LeftPanel_M">
+   </div>
+   <div class="dxpnlControl_Glass left-panel dxpnl-edge l dx-noPadding" id="ctl00_LeftPanel" style="width:382px;padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;">
+    <div class="dxpnl-acc dxpnl-scc" style="width:382px;padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;overflow:auto;">
+     <style type="text/css">
+      .node {
+            border-collapse: separate;
+            border-spacing: 4px;
+        }
+
+            .node td {
+                vertical-align: middle;
+            }
+
+        .controlLink {
+            color: #0C3C8C !important;
+            text-decoration: none;
+            display: block;
+        }
+
+        .controlDesc {
+            color: #494B50;
+        }
+
+        .nodeClass {
+            white-space: normal !important;
+            width: 270px;
+            text-wrap: normal;
+            font-size: 11pt;
+        }
+
+
+        .dxtv-control.dxtv-wrap-text .dxtv-nd .dxtv-ndTxt {
+            display: inline-block !important;
+            text-transform: uppercase;
+        }
+
+        .dxtv-control.dxtv-wrap-text .dxtv-ndTxt {
+            white-space: normal;
+        }
+
+        .dxtvControl_Office365 .dxtv-ndTxt {
+            white-space: normal;
+        }
+
+        #overlogo img {
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        .dxtvControl_Office365 .dxtv-ndSel {
+            background-color: #002a3b;
+            color: #FFFFFF;
+            cursor: default;
+            text-transform: uppercase !important;
+        }
+
+
+        #tableOfContentsTreeView ul li a {
+            background-color: Yellow;
+        }
+
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+        }
+
+            /* Tooltip text */
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                padding: 5px 0;
+                border-radius: 6px;
+                /* Position the tooltip text - see examples below! */
+                position: absolute;
+                z-index: 1;
+            }
+
+            /* Show the tooltip text when you mouse over the tooltip container */
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+
+        .dxtvControl_Glass .dxtv-ln {
+            background: none;
+        }
+
+        .dxnbLite_Moderno .dxnb-item.dxnb-link, .dxnbLite_Moderno .dxnb-item .dxnb-link, .dxnbLite_Moderno .dxnb-large.dxnb-link, .dxnbLite_Moderno .dxnb-large .dxnb-link {
+            padding: 5px 15px;
+            white-space: nowrap;
+        }
+        .dxtvControl_Moderno .dxtv-elbNoLn, .dxtvControl_Moderno .dxtv-elb {
+    width: 5px;
+    height: 5px;
+    vertical-align: top;
+    float: left;
+}
+     </style>
+     <script type="text/javascript">
+      function onShowPopup(x, y, text) {
+            lbl.SetText(text);
+            popup.ShowAtPos(x, y);
+        }
+
+        function OnInit(s, e) {
+            SetNodes(s, e);
+            InitializePopupElements();
+        }
+
+        function SetChildNodes(node) {
+            let childCounter = node.GetNodeCount();
+            if (childCounter != 0) {
+                for (let i = 0; i < childCounter; i++) {
+                    let treeNode = node.GetNode(i);
+                    treeNode.GetHtmlElement().addEventListener('mouseover', (e) => { TreeNodeOnMouseHover(e, treeNode) });
+                    treeNode.GetHtmlElement().addEventListener('mouseout', (e) => { TreeNodeOnMouseOut(e, treeNode) });
+                    SetChildNodes(treeNode);
+                }
+            }
+        }
+
+        function SetNodes(s, e) {
+            for (let i = 0; i < s.GetNodeCount(); i++) {
+                let treeNode = s.GetNode(i);
+                treeNode.GetHtmlElement().addEventListener('mouseover', (e) => { TreeNodeOnMouseHover(e, treeNode) });
+                treeNode.GetHtmlElement().addEventListener('mouseout', (e) => { TreeNodeOnMouseOut(e, treeNode) });
+                SetChildNodes(treeNode);
+            }
+        }
+
+        function TreeNodeOnMouseHover(event, node) {
+            var popupElement = node.name;
+            var itemDetail = tableOfContentsTreeView.cpItemDetails[popupElement];
+            var poptext = itemDetail.tooltip;
+            lbl.SetText(poptext);
+            popup.ShowAtPos(300, event.clientY);
+            popup.UpdatePosition();
+        }
+        function TreeNodeOnMouseOut(event, node) {
+
+            popup.Hide();
+
+        }
+        function InitializePopupElements() {
+            var nodeIDs = [];
+            for (var id in tableOfContentsTreeView.nodesInfo)
+                nodeIDs.push(id)
+            //nodeIDs.push('LeftPanel_LeftPanelContent_TableOfContentsTreeView_N0')
+            popup.SetPopupElementID(nodeIDs.join(";"));
+        }
+        function popup_Popup(s, e) {
+            var popupElement = s.GetCurrentPopupElement();
+            var itemDetail = tableOfContentsTreeView.cpItemDetails[popupElement.Name];
+
+            s.UpdatePosition();
+        }
+     </script>
+     <div style="position: relative; width: 100%; height: 5px; margin-top: 8px;">
+     </div>
+     <div class="dxtvControl_Moderno dxtv-control" id="ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView" style="width:100%;">
+      <div id="ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView_CD">
+       <ul>
+        <li>
+         <span class="dxtv-elbNoLn tree-view-elbow">
+          <img alt="Collapse" class="dxtv-btn dxWeb_tvColBtn_Moderno" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </span>
+         <a class="dxtv-nd tree-view-node" href="default.aspx?df=1&amp;lv=1">
+          <span class="dxtv-ndTxt nodeClass dx-vam" style="font-weight:bold;">
+           Sitemap to Popular Data Links
+          </span>
+          <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/3.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+         </a>
+         <b class="dxtv-clr">
+         </b>
+         <ul>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <div class="dxtv-ndTmpl">
+            <hr/>
+           </div>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=916">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             View Project Progress Reports
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/profiles.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=911">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             View Project Summary Reports
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/printer.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=0&amp;lv=0&amp;id=1">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Find a Project
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/folder_page.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <div class="dxtv-ndTmpl">
+            <hr/>
+           </div>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="dash/natdash.aspx?df=1&amp;lv=0">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Project Dashboards - National
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/three_tags.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=628">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Project Dashboards - Provincial
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/tag_green.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=629">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Project Dashboards - District Municipaly
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/tag_red.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=630">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Project Dashboards - Local Municipaly
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/tag_purple.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <div class="dxtv-ndTmpl">
+            <hr/>
+           </div>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=7">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Projects List Per Province
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/table_select_row.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=361">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Projects List Per District Municpality
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/calendar.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="level.aspx?df=1&amp;lv=1&amp;id=362">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Projects List Per Local Municpality
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/table_select.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <div class="dxtv-ndTmpl">
+            <hr/>
+           </div>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <a class="dxtv-nd tree-view-node" href="spatial_OnTrack.aspx?df=1&amp;lv=1">
+            <span class="dxtv-ndTxt nodeClass dx-vam">
+             Spatially Track Project Progress
+            </span>
+            <img alt="" class="dxtv-ndImg dx-vam" src="Images/Toolbars/32x32/google_custom_search.png" style="height:32px;width:32px;text-align:Right;margin-top:3px;"/>
+           </a>
+          </li>
+          <li class="dxtv-subnd">
+           <span class="dxtv-elbNoLn tree-view-elbow">
+           </span>
+           <div class="dxtv-ndTmpl">
+            <hr/>
+           </div>
+          </li>
+         </ul>
+        </li>
+       </ul>
+      </div>
+      <img alt="Collapse" class="dxtv-btn dxWeb_tvColBtn_Moderno" id="ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView_SCB" src="/pmd/DXR.axd?r=1_85-12mkn" style="display:none;"/>
+      <img alt="Expand" class="dxtv-btn dxWeb_tvExpBtn_Moderno" id="ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView_SEB" src="/pmd/DXR.axd?r=1_85-12mkn" style="display:none;"/>
+     </div>
+     <b class="dx-clear">
+     </b>
+     <script id="dxss_1364613010" type="text/javascript">
+      <!--
+ASPx.AddHoverItems('ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView',[[['dxtv-ndHov hovered'],[''],['N0','N0_1','N0_2','N0_3','N0_5','N0_6','N0_7','N0_8','N0_10','N0_11','N0_12','N0_14']]]);
+ASPx.AddSelectedItems('ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView',[[['dxtv-ndSel'],[''],['N0','N0_1','N0_2','N0_3','N0_5','N0_6','N0_7','N0_8','N0_10','N0_11','N0_12','N0_14']]]);
+ASPx.AddDisabledItems('ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView',[[['dxtv-nd tree-view-node dxtvDisabled_Moderno'],[''],['N0','N0_1','N0_2','N0_3','N0_5','N0_6','N0_7','N0_8','N0_10','N0_11','N0_12','N0_14']]]);
+ASPx.createControl(ASPxClientTreeView,'ctl00_LeftPanel_LeftPanelContent_TableOfContentsTreeView','tableOfContentsTreeView',{'uniqueID':'ctl00$LeftPanel$LeftPanelContent$TableOfContentsTreeView','cpItemDetails':{'Name_29':{'description':'Sitemap to Popular Data Links','tooltip':'Sitemap to Popular Data Links'},'Name_914':{'description':'','tooltip':''},'Name_916':{'description':'View Project Progress Reports','tooltip':'View Project Progress Reports'},'Name_911':{'description':'View Project Summary Reports','tooltip':'View Project Summary Reports'},'Name_1':{'description':'Find a Project','tooltip':'Find a Project'},'Name_907':{'description':'','tooltip':''},'Name_4':{'description':'Project Dashboards - National ','tooltip':'Project Dashboards - National '},'Name_628':{'description':'Project Dashboards - Provincial ','tooltip':'Project Dashboards - Provincial '},'Name_629':{'description':'Project Dashboards - District Municipaly','tooltip':'Project Dashboards - District Municipaly'},'Name_630':{'description':'Project Dashboards - Local Municipaly','tooltip':'Project Dashboards - Local Municipaly'},'Name_906':{'description':'','tooltip':''},'Name_7':{'description':'Projects List Per Province','tooltip':'Projects List Per Province'},'Name_361':{'description':'Projects List Per District Municpality','tooltip':'Projects List Per District Municpality'},'Name_362':{'description':'Projects List Per Local Municpality','tooltip':'Projects List Per Local Municpality'},'Name_909':{'description':'','tooltip':''},'Name_910':{'description':'Spatially Track Project Progress','tooltip':'Spatially Track Project Progress'},'Name_915':{'description':'','tooltip':''}},'nodesState':[{'N0':'T'},'',{}],'enableNodeTextWrapping':true,'nodesInfo':{'0':['T','T','Name_29','default.aspx?df=1&lv=1',''],'0_0':['T','T','Name_914','?df=1&lv=1',''],'0_1':['T','T','Name_916','level.aspx?df=1&lv=1&id=916',''],'0_2':['T','T','Name_911','level.aspx?df=1&lv=1&id=911',''],'0_3':['T','T','Name_1','level.aspx?df=0&lv=0&id=1',''],'0_4':['T','T','Name_907','?df=1&lv=1',''],'0_5':['T','T','Name_4','dash/natdash.aspx?df=1&lv=0',''],'0_6':['T','T','Name_628','level.aspx?df=1&lv=1&id=628',''],'0_7':['T','T','Name_629','level.aspx?df=1&lv=1&id=629',''],'0_8':['T','T','Name_630','level.aspx?df=1&lv=1&id=630',''],'0_9':['T','T','Name_906','?df=1&lv=1',''],'0_10':['T','T','Name_7','level.aspx?df=1&lv=1&id=7',''],'0_11':['T','T','Name_361','level.aspx?df=1&lv=1&id=361',''],'0_12':['T','T','Name_362','level.aspx?df=1&lv=1&id=362',''],'0_13':['T','T','Name_909','?df=1&lv=1',''],'0_14':['T','T','Name_910','spatial_OnTrack.aspx?df=1&lv=1',''],'0_15':['T','T','Name_915','?df=1&lv=1','']},'allowSelectNode':true},{'Init':OnInit,'NodeClick':function (s, e) { HideLeftPanelIfRequired(); }});
+
+//-->
+     </script>
+     <div class="dxpcLite_Moderno dxpclW" id="ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_PW-1" style="width:200px;z-index:10000;display:none;visibility:hidden;">
+      <div class="dxpc-mainDiv dxpc-shadow">
+       <div class="dxpc-contentWrapper">
+        <div class="dxpc-content">
+         <div style="width: 100%; text-align: center;">
+          <span class="dxeBase_Glass" id="ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_ASPxLabel1">
+          </span>
+          <script id="dxss_1925590681" type="text/javascript">
+           <!--
+ASPx.createControl(ASPxClientLabel,'ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_ASPxLabel1','lbl',{'uniqueID':'ctl00$LeftPanel$LeftPanelContent$ASPxPopupControl1$ASPxLabel1','scStates':4,'scPostfix':'Glass'});
+
+//-->
+          </script>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+     <table class="dxpcLoadingPanel_Moderno dxlpLoadingPanel_Moderno" id="ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_LP" style="left:0px;top:0px;z-index:30000;display:none;">
+      <tr>
+       <td class="dx" style="padding-right:0px;">
+        <img alt="" class="dxlp-loadingImage dxlp-imgPosLeft" src="/pmd/DXR.axd?r=1_85-12mkn" style="vertical-align:middle;"/>
+       </td>
+       <td class="dx" style="padding-left:0px;">
+        <span id="ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_TL">
+         Loading…
+        </span>
+       </td>
+      </tr>
+     </table>
+     <div class="dxpcLoadingDiv_Moderno dxlpLoadingDiv_Moderno dx-ft" id="ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1_LD" style="left:0px;top:0px;z-index:29999;display:none;position:absolute;">
+     </div>
+     <script id="dxss_804462545" type="text/javascript">
+      <!--
+ASPx.AddHoverItems('ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1',[[['dxpc-closeBtnHover'],[''],['HCB-1']]]);
+ASPx.createControl(ASPxClientPopupControl,'ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1','popup',{'callBack':function(arg) { WebForm_DoCallback('ctl00$LeftPanel$LeftPanelContent$ASPxPopupControl1',arg,ASPx.Callback,'ctl00_LeftPanel_LeftPanelContent_ASPxPopupControl1',ASPx.CallbackError,true); },'uniqueID':'ctl00$LeftPanel$LeftPanelContent$ASPxPopupControl1','popupAnimationType':'slide','isPopupPositionCorrectionOn':false});
+
+//-->
+     </script>
+    </div>
+   </div>
+   <script id="dxss_383700945" type="text/javascript">
+    <!--
+ASPx.AddSelectedItems('ctl00_LeftPanel',[[['dxpnl-expanded'],[''],['','EB']]]);
+ASPx.createControl(ASPxClientPanel,'ctl00_LeftPanel','leftPanel',{'uniqueID':'ctl00$LeftPanel','collapseWindowWidth':960,'animationType':'slide','expandEffect':'PopupToRight'},{'Init':onLeftPanelInit,'Collapsed':onLeftPanelCollapsed});
+
+//-->
+   </script>
+   <div class="dxpnl-bar dxpnl-collapsible dxpnl-edge r dxpnlControl_Glass right-panel expand-bar" id="ctl00_RightPanel_EB" style="z-index:1006;padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;">
+   </div>
+   <div class="dxpnl-modal" id="ctl00_RightPanel_M">
+   </div>
+   <div class="dxpnlControl_Glass right-panel dxpnl-collapsible dxpnl-edge r dx-noPadding" id="ctl00_RightPanel" style="width:260px;padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;z-index:1007;">
+    <div class="dxpnl-scc" style="width:260px;padding-left:0px;padding-right:0px;padding-top:0px;padding-bottom:0px;overflow:auto;">
+     <div class="dxmLite_Glass dxm-ltr">
+      <div class="dxm-main dxm-vertical dxm-autoWidth" id="ctl00_RightPanel_ASPxMenu_Rignt" style="border-width:1px;border-style:solid;width:100%;">
+       <ul class="dx dxm-image-l dxm-gutter">
+        <li class="dxm-item dxm-noSubMenu">
+         <a class="dxm-content dxm-hasText dx dxm-valign" href="index.aspx" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/ButtonHome.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Home
+          </span>
+         </a>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-noSubMenu">
+         <a class="dxm-content dxm-hasText dx dxm-valign" href="Default.aspx" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/3.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Sitemap
+          </span>
+         </a>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-noSubMenu">
+         <a class="dxm-content dxm-hasText dx dxm-valign" href="search.aspx" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/server_components.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Search
+          </span>
+         </a>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-subMenu">
+         <div class="dxm-content dxm-hasText dxm-valign" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/newspaper.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Documents
+          </span>
+         </div>
+         <div class="dxm-popOut">
+          <img alt="&gt;" class="dxWeb_mVerticalPopOut_Glass dxm-pImage" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </div>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-subMenu">
+         <div class="dxm-content dxm-hasText dxm-valign" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/6.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Dashboards
+          </span>
+         </div>
+         <div class="dxm-popOut">
+          <img alt="&gt;" class="dxWeb_mVerticalPopOut_Glass dxm-pImage" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </div>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-subMenu">
+         <div class="dxm-content dxm-hasText dxm-valign" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/map.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Spatial Views
+          </span>
+         </div>
+         <div class="dxm-popOut">
+          <img alt="&gt;" class="dxWeb_mVerticalPopOut_Glass dxm-pImage" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </div>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-subMenu">
+         <div class="dxm-content dxm-hasText dxm-valign" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/folder_page.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Projects
+          </span>
+         </div>
+         <div class="dxm-popOut">
+          <img alt="&gt;" class="dxWeb_mVerticalPopOut_Glass dxm-pImage" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </div>
+         <b class="dx-clear">
+         </b>
+        </li>
+        <li class="dxm-separator">
+         <b>
+         </b>
+        </li>
+        <li class="dxm-item dxm-subMenu">
+         <div class="dxm-content dxm-hasText dxm-valign" style="padding-right:7px;vertical-align:middle;">
+          <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/application_view_gallery.png" style="margin-right:0px;"/>
+          <span class="dx-vam dxm-contentText">
+           Reports
+          </span>
+         </div>
+         <div class="dxm-popOut">
+          <img alt="&gt;" class="dxWeb_mVerticalPopOut_Glass dxm-pImage" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+         </div>
+         <b class="dx-clear">
+         </b>
+        </li>
+       </ul>
+      </div>
+      <b class="dx-clear">
+      </b>
+      <div id="ctl00_RightPanel_ASPxMenu_Rignt_DXM3_" style="z-index:20002;display:none;">
+       <div class="dxm-shadow dxm-popup">
+        <ul class="dx dxm-gutter">
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="docs/Default.aspx?dt=-1">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/newspaper_link.png"/>
+           <span class="dx-vam dxm-contentText">
+            Linked Documents
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="docs/doc_search.aspx?dt=-1">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/calendar_copy.png"/>
+           <span class="dx-vam dxm-contentText">
+            Document Search
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+        </ul>
+       </div>
+      </div>
+      <div id="ctl00_RightPanel_ASPxMenu_Rignt_DXM4_" style="z-index:20002;display:none;">
+       <div class="dxm-shadow dxm-popup">
+        <ul class="dx dxm-gutter">
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="dash/natdash.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/three_tags.png"/>
+           <span class="dx-vam dxm-contentText">
+            National Dashboard
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="dash/natdash_prov.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/tag_green.png"/>
+           <span class="dx-vam dxm-contentText">
+            ProvDashboard
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="dash/natdash_dm.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/tag_red.png"/>
+           <span class="dx-vam dxm-contentText">
+            DMDashboard
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="dash/natdash_lm.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/tag_purple.png"/>
+           <span class="dx-vam dxm-contentText">
+            LMDashboard
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+        </ul>
+       </div>
+      </div>
+      <div id="ctl00_RightPanel_ASPxMenu_Rignt_DXM5_" style="z-index:20002;display:none;">
+       <div class="dxm-shadow dxm-popup">
+        <ul class="dx dxm-gutter">
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="spatial.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/google_map.png"/>
+           <span class="dx-vam dxm-contentText">
+            Project Size
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="spatial2.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/map_magnify.png"/>
+           <span class="dx-vam dxm-contentText">
+            List All Projects
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-separator">
+          <b>
+          </b>
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="spatial_OnTrack.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/google_custom_search.png"/>
+           <span class="dx-vam dxm-contentText">
+            Track Project Progress [Preferred view]
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="spatial_OnTrack_leaf.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/google_custom_search.png"/>
+           <span class="dx-vam dxm-contentText">
+            Track Project Progress [Leaf]
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+        </ul>
+       </div>
+      </div>
+      <div id="ctl00_RightPanel_ASPxMenu_Rignt_DXM6_" style="z-index:20002;display:none;">
+       <div class="dxm-shadow dxm-popup">
+        <ul class="dx dxm-gutter">
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="project/proj_detail.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/folder_image.png"/>
+           <span class="dx-vam dxm-contentText">
+            Last Visited Project
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-separator">
+          <b>
+          </b>
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/Default.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/table_select_row.png"/>
+           <span class="dx-vam dxm-contentText">
+            Projects List
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/parent_rel.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/calendar_copy.png"/>
+           <span class="dx-vam dxm-contentText">
+            Projects/Phases [Admin]
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-separator">
+          <b>
+          </b>
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/progress.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/table_replace.png"/>
+           <span class="dx-vam dxm-contentText">
+            Project Progress Data
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/progress_lap.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/laptop.png"/>
+           <span class="dx-vam dxm-contentText">
+            Project Progress Data [Laptop]
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+        </ul>
+       </div>
+      </div>
+      <div id="ctl00_RightPanel_ASPxMenu_Rignt_DXM7_" style="z-index:20002;display:none;">
+       <div class="dxm-shadow dxm-popup">
+        <ul class="dx dxm-gutter">
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="searchsumreport.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/printer_empty.png"/>
+           <span class="dx-vam dxm-contentText">
+            Search Summary Reports
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/sumreports.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/table_select_row.png"/>
+           <span class="dx-vam dxm-contentText">
+            List of Summary Reports
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-separator">
+          <b>
+          </b>
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="projects/progreports.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/profiles.png"/>
+           <span class="dx-vam dxm-contentText">
+            Most recent Progress Report
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="reports/proj_monthlyprogress.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/calendar.png"/>
+           <span class="dx-vam dxm-contentText">
+            Monthly Project Progress Report
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-separator">
+          <b>
+          </b>
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="reports/proj_complete.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/folder_edit.png"/>
+           <span class="dx-vam dxm-contentText">
+            Project Data Capturing Status Report
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="reports/proj_complete_nat.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/data_sort.png"/>
+           <span class="dx-vam dxm-contentText">
+            Data Capture Completeness Reports
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+         <li class="dxm-spacing">
+         </li>
+         <li class="dxm-item">
+          <a class="dxm-content dxm-hasText dx" href="reports/proj_submission_nat.aspx">
+           <img alt="" class="dxm-image dx-vam" src="Images/Toolbars/32x32/chart_up_color.png"/>
+           <span class="dx-vam dxm-contentText">
+            National Approved Monthly Progress Submissions
+           </span>
+          </a>
+          <b class="dx-clear">
+          </b>
+         </li>
+        </ul>
+       </div>
+      </div>
+     </div>
+     <script id="dxss_1634426531" type="text/javascript">
+      <!--
+ASPx.AddHoverItems('ctl00_RightPanel_ASPxMenu_Rignt',[[['dxm-hovered','',''],['','',''],['DXI0_','DXI1_','DXI2_','DXI3_','DXI4_','DXI5_','DXI6_','DXI7_'],['','P','T']],[[''],[''],['DXME3_','DXMBC3_','DXME4_','DXMBC4_','DXME5_','DXMBC5_','DXME6_','DXMBC6_','DXME7_','DXMBC7_']],[['dxm-hovered',''],['',''],['DXI3i0_','DXI3i1_','DXI4i0_','DXI4i1_','DXI4i2_','DXI4i3_','DXI5i0_','DXI5i1_','DXI5i2_','DXI5i3_','DXI6i0_','DXI6i1_','DXI6i2_','DXI6i3_','DXI6i4_','DXI7i0_','DXI7i1_','DXI7i2_','DXI7i3_','DXI7i4_','DXI7i5_','DXI7i6_'],['','T']]]);
+ASPx.AddDisabledItems('ctl00_RightPanel_ASPxMenu_Rignt',[[['dxm-disabled'],[''],['DXI0_','DXI1_','DXI2_','DXI3_','DXI4_','DXI5_','DXI6_','DXI7_'],['','P','T']],[['dxm-disabled'],[''],['DXI3i0_','DXI3i1_','DXI4i0_','DXI4i1_','DXI4i2_','DXI4i3_','DXI5i0_','DXI5i1_','DXI5i2_','DXI5i3_','DXI6i0_','DXI6i1_','DXI6i2_','DXI6i3_','DXI6i4_','DXI7i0_','DXI7i1_','DXI7i2_','DXI7i3_','DXI7i4_','DXI7i5_','DXI7i6_'],['','T']]]);
+ASPx.createControl(ASPxClientMenu,'ctl00_RightPanel_ASPxMenu_Rignt','',{'uniqueID':'ctl00$RightPanel$ASPxMenu_Rignt','renderData':{'':[[0],[1],[2],[3],[4],[5],[6],[7]],'3':[[0],[1]],'4':[[0],[1],[2],[3]],'5':[[0],[1],[2],[3]],'6':[[0],[1],[2],[3],[4]],'7':[[0],[1],[2],[3],[4],[5],[6]]},'rootSubMenuFIXOffset':-1,'rootSubMenuFIYOffset':-2,'rootSubMenuLIXOffset':-1,'rootSubMenuLIYOffset':-2,'rootSubMenuXOffset':-1,'rootSubMenuYOffset':-2,'isVertical':true},{'ItemClick':OnItemClick},null,{'items':[{},{},{},{'items':[{},{}]},{'items':[{},{'clientVisible':false},{'clientVisible':false},{'clientVisible':false}]},{'items':[{},{},{'beginGroup':true},{}]},{'items':[{'clientVisible':false},{'beginGroup':true},{},{'beginGroup':true},{},{'beginGroup':true,'enabled':false,'visible':false},{'enabled':false,'visible':false},{'beginGroup':true,'enabled':false,'visible':false},{'beginGroup':true,'enabled':false,'visible':false}]},{'items':[{},{},{'beginGroup':true},{},{'beginGroup':true},{},{},{'beginGroup':true,'enabled':false,'visible':false}]},{'enabled':false,'visible':false,'name':'MenuLogin'},{'enabled':false,'visible':false,'items':[{'beginGroup':true,'enabled':false,'visible':false},{'beginGroup':true,'enabled':false,'visible':false},{'beginGroup':true,'enabled':false,'visible':false},{'beginGroup':true},{'beginGroup':true,'enabled':false,'visible':false},{'enabled':false,'visible':false},{'enabled':false,'visible':false}]},{'beginGroup':true,'visible':false,'enabled':false,'name':'MenuHideBanners'},{'enabled':false,'visible':false,'name':'MenuLegend'}]});
+
+//-->
+     </script>
+    </div>
+   </div>
+   <script id="dxss_2080824340" type="text/javascript">
+    <!--
+ASPx.AddSelectedItems('ctl00_RightPanel',[[['dxpnl-expanded'],[''],['','EB']]]);
+ASPx.createControl(ASPxClientPanel,'ctl00_RightPanel','rightPanel',{'uniqueID':'ctl00$RightPanel','fixedPositionOverlap':true,'animationType':'fade','expandEffect':'PopupToLeft'},{'Collapsed':onRightPanelCollapsed});
+
+//-->
+   </script>
+   <div class="dxpnlControl_Glass page-toolbar-wrapper" id="ctl00_PageToolbarPanel">
+   </div>
+   <script id="dxss_1774277702" type="text/javascript">
+    <!--
+ASPx.createControl(ASPxClientPanel,'ctl00_PageToolbarPanel','pageToolbarPanel',{'uniqueID':'ctl00$PageToolbarPanel'},{'Init':onPageToolbarInit});
+
+//-->
+   </script>
+   <div class="content" id="pageContent">
+    <style>
+     .x-path {
+            margin-top: 5px;
+        }
+
+            .x-path > span:first-child {
+                margin-right: 10px;
+            }
+
+        .dxnbSys {
+            padding: 0 !important;
+        }
+
+        .settings {
+            margin-bottom: 15px;
+            margin: auto;
+            width: 85%;
+            padding: 10px;
+            padding-top: 25px;
+        }
+
+        img.dxWeb_nbExpand.dxnb-btn {
+            /*background: url('../Images/down.png');
+            width: 32px;
+            height: 32px;
+            background-repeat: no-repeat;
+            background-position: right top;*/
+            visibility: hidden;
+        }
+
+
+        img.dxWeb_nbCollapse.dxnb-btn {
+            /*background: url('../Images/up.png');
+            width: 32px;
+            height: 32px;
+            background-repeat: no-repeat;
+            background-position: right top;*/
+            visibility: hidden;
+        }
+
+        .dxnbLite_Office365 .dxnb-btnLeft, .dxnbLite_Office365 .dxnb-rtlHeader .dxnb-btn {
+            visibility: hidden;
+            display: none;
+        }
+
+        .dxnbLite_Office365 .dxnb-itemSelected, .dxnbLite_Office365 .dxnb-largeSelected, .dxnbLite_Office365 .dxnb-bulletSelected, .dxnbLite_Office365 .dxnb-itemSelected a, .dxnbLite_Office365 .dxnb-largeSelected a, .dxnbLite_Office365 .dxnb-bulletSelected a {
+            background-color: #002a3b;
+            color: white;
+            text-transform: uppercase !important;
+        }
+
+        .uppercasespan {
+            text-transform: uppercase !important;
+            font-size: 12pt;
+        }
+
+        .container {
+            /*display: flex;*/
+            flex-wrap: wrap;
+            text-align: center;
+            padding: 5px 0;
+            font-size: 13pt;
+            display: inline-block;
+        }
+
+        .anchor {
+            padding: 0 10px;
+            font: 14px "Segoe UI", "Helvetica Neue", Helvetica, "Droid Sans", Tahoma, Geneva, sans-serif;
+            color: #2a769d;
+            float: left;
+        }
+
+        .active {
+            color: darkred !important;
+        }
+
+        .dxnbLite_Moderno .dxnb-item.dxnb-link, .dxnbLite_Moderno .dxnb-item .dxnb-link, .dxnbLite_Moderno .dxnb-large.dxnb-link, .dxnbLite_Moderno .dxnb-large .dxnb-link {
+            padding: 5px 15px;
+            white-space: nowrap;
+        }
+
+        .dxtvControl_Moderno .dxtv-nd {
+            float: left;
+            margin-top: 1px;
+            padding: 2px 8px;
+            display: block;
+            text-decoration: none;
+            outline: 0 none;
+        }
+    </style>
+    <script type="text/javascript">
+     var selectVals = null;
+        function SelectAndClosePopup(values) {
+            LoadingPanel.Show();
+            if (cbp_phase_reportdetails.InCallback()) {
+                selectVals = values;
+            }
+            else {
+                cbp_phase_reportdetails.PerformCallback(values);
+            }
+            //alert(value);
+            //btReturnReport.SetValue(value);
+            //txtRetString.SetText(value);
+            popupControlReportTemplate.Hide();
+            //setTimeout(scrollToDivRespOff, 1);
+        }
+        function endCallBackreportdetails(s, e) {
+            if (selectVals) {
+                cbp_phase_reportdetails.PerformCallback(selectVals);
+                selectVals = null;
+                popupControlReportTemplate.Hide();
+            }
+        }
+
+        function MoveToPage(symbol) {
+            //sampleGrid.PerformCallback(symbol);
+            MyCallbackPanel.PerformCallback(symbol);
+        }
+
+        var comm;
+        function OnBeginCallback(s, e) {
+            comm = e.command;
+        }
+
+        function OnEndCallback(s, e) {
+            if (comm == "APPLYFILTER" && s.cpFilter == "clear") {
+                MyCallbackPanel.PerformCallback('All');
+            }
+        }
+    </script>
+    <div class="settings">
+     <div style="margin: auto; width: 100%; background-color: white; padding: 10px;">
+      <div class="dxpnlControl_Glass" id="ctl00_PageContent_MyCallbackPanel">
+       <div class="dxpnlControl_Glass" id="ctl00_PageContent_MyCallbackPanel_PanelPager" title="Select Alphabet Character here to filter on Project name...">
+       </div>
+       <script id="dxss_697989042" type="text/javascript">
+        <!--
+ASPx.createControl(ASPxClientPanel,'ctl00_PageContent_MyCallbackPanel_PanelPager','aphafilter',{'uniqueID':'ctl00$PageContent$MyCallbackPanel$PanelPager'});
+
+//-->
+       </script>
+       <ul class="dxnbLite_Moderno dxnbSys" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1" style="border-style:None;width:100%;">
+        <li class="dxnb-gr" style="margin-bottom:0px;">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC0_lblModel" style="color:White;font-size:16pt;">
+              Project Dashboards
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC0_ctl00" src="Images/Toolbars/32x32/6.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+        <li class="dxnb-gr" style="margin-bottom:0px;">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC1_lblModel" style="color:White;font-size:16pt;">
+              Select Projects per Province
+              <br/>
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC1_ctl00" src="Images/Toolbars/32x32/table_select_row.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+        <li class="dxnb-gr" style="margin-bottom:0px;">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC2_lblModel" style="color:White;font-size:16pt;">
+              System Introduction and National Project Summary
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC2_ctl00" src="Images/Toolbars/32x32/ButtonHome.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+        <li class="dxnb-gr" style="margin-bottom:0px;">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC3_lblModel" style="color:White;font-size:16pt;">
+              View Project Details
+              <br/>
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC3_ctl00" src="Images/Toolbars/32x32/folder_page.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+        <li class="dxnb-gr" style="margin-bottom:0px;">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC4_lblModel" style="color:White;font-size:16pt;">
+              View Project Summaries Per
+              <br/>
+              Province
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC4_ctl00" src="Images/Toolbars/32x32/tag_green.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+        <li class="dxnb-gr">
+         <div class="dxnb-headerCollapsed" style="background-color:#002A3B;cursor:default;text-align:Center;">
+          <table style="width: 100%;">
+           <tr>
+            <td style="width: 90%; text-align: center;">
+             <span class="dxeBase_Glass uppercasespan" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC5_lblModel" style="color:White;font-size:16pt;">
+              View Project Summaries per WSA
+             </span>
+            </td>
+            <td style="text-align: right;padding: 7px;">
+             <img alt="" class="dxeImage_Glass" id="ctl00_PageContent_MyCallbackPanel_ASPxNavBar1_GHTCC5_ctl00" src="Images/Toolbars/32x32/tag_red.png" style="height:32px;width:32px;"/>
+            </td>
+           </tr>
+          </table>
+         </div>
+        </li>
+       </ul>
+       <b class="dx-clear">
+       </b>
+       <script id="dxss_1359298873" type="text/javascript">
+        <!--
+ASPx.AddHoverItems('ctl00_PageContent_MyCallbackPanel_ASPxNavBar1',[[['dxnb-headerHover'],[''],['GHE0','GHE1','GHE2','GHE3','GHE4','GHE5']],[['dxnb-headerCollapsedHover'],[''],['GHC0','GHC1','GHC2','GHC3','GHC4','GHC5']]]);
+ASPx.createControl(ASPxClientNavBar,'ctl00_PageContent_MyCallbackPanel_ASPxNavBar1','',{'encodeHtml':false,'uniqueID':'ctl00$PageContent$MyCallbackPanel$ASPxNavBar1','allowExpanding':false,'allowSelectItem':true,'selectedItemIndexPath':'','groupsExpanding':[true,true,true,true,true,true]},null,null,{'groups':[['Name_4',,,,[]],['Name_7',,,,[]],['Name_29',,,,[]],['Name_1',,,,[]],['Name_2',,,,[]],['Name_3',,,,[]]]});
+
+//-->
+       </script>
+      </div>
+      <table class="dxpnlLoadingPanelWithContent_Glass dxlpLoadingPanelWithContent_Glass" id="ctl00_PageContent_MyCallbackPanel_LP" style="left:0px;top:0px;z-index:30000;display:none;">
+       <tr>
+        <td class="dx" style="padding-right:0px;">
+         <img alt="" class="dxlp-loadingImage dxlp-imgPosLeft" src="/pmd/DXR.axd?r=1_85-12mkn" style="vertical-align:middle;"/>
+        </td>
+        <td class="dx" style="padding-left:0px;">
+         <span id="ctl00_PageContent_MyCallbackPanel_TL">
+          Loading…
+         </span>
+        </td>
+       </tr>
+      </table>
+      <div class="dxpnlLoadingDivWithContent_Glass dxlpLoadingDivWithContent_Glass dx-ft" id="ctl00_PageContent_MyCallbackPanel_LD" style="left:0px;top:0px;z-index:29999;display:none;position:absolute;">
+      </div>
+      <script id="dxss_108359120" type="text/javascript">
+       <!--
+ASPx.createControl(ASPxClientCallbackPanel,'ctl00_PageContent_MyCallbackPanel','MyCallbackPanel',{'callBack':function(arg) { WebForm_DoCallback('ctl00$PageContent$MyCallbackPanel',arg,ASPx.Callback,'ctl00_PageContent_MyCallbackPanel',ASPx.CallbackError,true); },'uniqueID':'ctl00$PageContent$MyCallbackPanel','hideContentOnCallback':false});
+
+//-->
+      </script>
+     </div>
+    </div>
+    <div class="footer-wrapper" id="footerWrapper">
+     <div class="footer">
+      <span class="footer-left">
+       © 2022 PMD
+      </span>
+      <span class="footer-right">
+       <a class="footer-link" href="#">
+        Privacy Policy
+       </a>
+       <a class="footer-link" href="#">
+        Terms of Service
+       </a>
+      </span>
+     </div>
+    </div>
+   </div>
+   <script id="dxss_877440380" type="text/javascript">
+    <!--
+var dxo = ASPx.GetGlobalEvents();
+dxo.SetEvents({'ControlsInitialized':onControlsInitialized,'BrowserWindowResized':onBrowserWindowResized});
+
+//-->
+   </script>
+   <div class="light display-right" id="cookieNotice" style="display: none;">
+    <div id="closeIcon" style="display: none;">
+    </div>
+    <div class="title-wrap">
+     <h4>
+      Cookie Consent
+     </h4>
+    </div>
+    <div class="content-wrap">
+     <div class="msg-wrap">
+      <p>
+       This website uses cookies or similar technologies, to enhance your browsing experience and provide personalized recommendations. By continuing to use our website, you agree to our
+       <a href="privacy-policy/">
+        Privacy Policy
+       </a>
+      </p>
+      <div class="btn-wrap">
+       <button class="btn-primary" onclick="acceptCookieConsent();">
+        Accept
+       </button>
+      </div>
+     </div>
+    </div>
+   </div>
+   <script type="text/javascript">
+    let cookie_consent = getCookie("pmd_user_cookie_consent");
+                if (cookie_consent != "") {
+                    document.getElementById("cookieNotice").style.display = "none";
+                } else {
+                    document.getElementById("cookieNotice").style.display = "block";
+                }
+   </script>
+   <script src="Scripts/jquery-3.4.1.min.js" type="text/javascript">
+   </script>
+   <script src="Scripts/sleep.js" type="text/javascript">
+   </script>
+   <style>
+    .counterclass {
+    margin: auto; width:100%; padding: 10px; text-align:center; font-family: sans-serif;        
+}
+.logoclass {
+    margin: auto; padding: 10px; width:427px; height:140px; 
+  background-image: url('Content/Images/dws_logo_large.png');
+  background-position: center;
+  background-size: 100%;
+  background-repeat: no-repeat;
+}
+input.right {
+        float: right;
+      }
+   </style>
+   <script type="text/javascript">
+    $(document).ready(function () {
+        sleep.prevent();
+    });
+
+    window.SessionTimeout = (function() {
+        var _timeLeft, _popupTimer, _countDownTimer;
+        
+        var stopTimers = function() {
+            window.clearTimeout(_popupTimer);
+            window.clearTimeout(_countDownTimer);
+        };
+
+        var updateCountDown = function() {
+            var min = Math.floor(_timeLeft / 60);
+            var sec = _timeLeft % 60;
+            if(sec < 10)
+                sec = "0" + sec;
+
+            document.getElementById("CountDownHolder").innerHTML = min + ":" + sec;
+
+            if(_timeLeft > 0) {
+                _timeLeft--;
+                _countDownTimer = window.setTimeout(updateCountDown, 1000);
+            } else  {
+                window.location = "/pmd/TimeOutPage.aspx?index=3";
+            }            
+        };
+
+        var showPopup = function() {
+            _timeLeft = 60;
+            updateCountDown();
+            ClientTimeoutPopup.Show();
+        };
+
+        var schedulePopup = function() {       
+            stopTimers();
+            if (0 == 1)
+                _popupTimer = window.setTimeout(showPopup, 21540000);
+        };
+
+        var sendKeepAlive = function() {
+            stopTimers();
+            ClientTimeoutPopup.Hide();
+            ClientKeepAliveHelper.PerformCallback();
+        };
+
+
+        return {
+            schedulePopup: schedulePopup,
+            sendKeepAlive: sendKeepAlive
+        };
+        
+    })();
+
+    function logout() {        
+        //ClientSignOutHelper.PerformCallback();
+        sleep.allow();
+        ClientTimeoutPopup.Hide();
+        window.location = "/pmd/default.aspx?index=3";
+    };
+    function reroute_home() {
+        sleep.allow();
+        window.location = "/pmd/default.aspx?index=3";
+    };
+   </script>
+   <div class="dxmodalSys">
+    <div class="dxpcLite_Glass dxpclW" id="ctl00_TimeoutControl1_TimeoutPopup_PW-1" style="z-index:10000;display:none;visibility:hidden;">
+     <div class="dxpc-mainDiv dxpc-shadow">
+      <div class="dxpc-header drag dxpc-withBtn" style="-webkit-user-select:none;">
+       <div class="dxpc-closeBtn">
+        <img alt="Close" class="dxWeb_pcCloseButton_Glass" src="/pmd/DXR.axd?r=1_85-12mkn"/>
+       </div>
+       <div class="dxpc-headerContent">
+        <span class="dxpc-headerText dx-vam">
+         Active Session Expiring
+        </span>
+       </div>
+       <b class="dx-clear">
+       </b>
+      </div>
+      <div class="dxpc-contentWrapper">
+       <div class="dxpc-content">
+        <div class="counterclass">
+         Your PMD session is about to expire!
+         <br/>
+         <br/>
+         <span id="CountDownHolder" style="font-weight: bold;">
+         </span>
+         <br/>
+         <br/>
+         Click OK to continue your session.
+        </div>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <div class="logoclass">
+        </div>
+       </div>
+      </div>
+      <div class="dxpc-footer">
+       <div class="dxpc-footerContent">
+        <div style="width: 100%; text-align: right; align-content: flex-end;">
+         <div class="dxbButton_Glass dxbButtonSys dxbTSys" id="ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton" style="-webkit-user-select:none;">
+          <div class="dxb">
+           <div class="dxb-hbc">
+            <input class="dxb-hb" id="ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton_I" name="ctl00$TimeoutControl1$TimeoutPopup$TPCFCm1$logoutButton" type="submit" value="Sign out"/>
+           </div>
+           <span class="dx-vam">
+            Sign out
+           </span>
+          </div>
+         </div>
+         <script id="dxss_2078292191" type="text/javascript">
+          <!--
+ASPx.AddHoverItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton',[[['dxbButtonHover_Glass'],[''],[''],['','TC']]]);
+ASPx.AddPressedItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton',[[['dxbButtonPressed_Glass'],[''],[''],['','TC']]]);
+ASPx.AddDisabledItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton',[[['dxbDisabled_Glass'],[''],[''],['','TC']]]);
+ASPx.AddSelectedItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton',[[['dxbf'],[''],['CD']]]);
+ASPx.InitializeSVGSprite();
+ASPx.createControl(ASPxClientButton,'ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_logoutButton','',{'uniqueID':'ctl00$TimeoutControl1$TimeoutPopup$TPCFCm1$logoutButton','causesValidation':false},{'Click':logout});
+
+//-->
+         </script>
+         <div class="dxbButton_Glass dxbButtonSys dxbTSys" id="ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton" style="-webkit-user-select:none;">
+          <div class="dxb">
+           <div class="dxb-hbc">
+            <input class="dxb-hb" id="ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton_I" name="ctl00$TimeoutControl1$TimeoutPopup$TPCFCm1$OkButton" type="submit" value="OK"/>
+           </div>
+           <span class="dx-vam">
+            OK
+           </span>
+          </div>
+         </div>
+         <script id="dxss_1623413703" type="text/javascript">
+          <!--
+ASPx.AddHoverItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton',[[['dxbButtonHover_Glass'],[''],[''],['','TC']]]);
+ASPx.AddPressedItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton',[[['dxbButtonPressed_Glass'],[''],[''],['','TC']]]);
+ASPx.AddDisabledItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton',[[['dxbDisabled_Glass'],[''],[''],['','TC']]]);
+ASPx.AddSelectedItems('ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton',[[['dxbf'],[''],['CD']]]);
+ASPx.createControl(ASPxClientButton,'ctl00_TimeoutControl1_TimeoutPopup_TPCFCm1_OkButton','',{'uniqueID':'ctl00$TimeoutControl1$TimeoutPopup$TPCFCm1$OkButton','causesValidation':false},{'Click':SessionTimeout.sendKeepAlive});
+
+//-->
+         </script>
+        </div>
+       </div>
+       <b class="dx-clear">
+       </b>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="dxpcModalBackLite_Glass" id="ctl00_TimeoutControl1_TimeoutPopup_DXPWMB-1" style="z-index:9999;">
+   </div>
+   <table class="dxpcLoadingPanel_Glass dxlpLoadingPanel_Glass" id="ctl00_TimeoutControl1_TimeoutPopup_LP" style="left:0px;top:0px;z-index:30000;display:none;">
+    <tr>
+     <td class="dx" style="padding-right:0px;">
+      <img alt="" class="dxlp-loadingImage dxlp-imgPosLeft" src="/pmd/DXR.axd?r=1_85-12mkn" style="vertical-align:middle;"/>
+     </td>
+     <td class="dx" style="padding-left:0px;">
+      <span id="ctl00_TimeoutControl1_TimeoutPopup_TL">
+       Loading…
+      </span>
+     </td>
+    </tr>
+   </table>
+   <div class="dxpcLoadingDiv_Glass dxlpLoadingDiv_Glass dx-ft" id="ctl00_TimeoutControl1_TimeoutPopup_LD" style="left:0px;top:0px;z-index:29999;display:none;position:absolute;">
+   </div>
+   <script id="dxss_2021888048" type="text/javascript">
+    <!--
+ASPx.AddHoverItems('ctl00_TimeoutControl1_TimeoutPopup',[[['dxpc-closeBtnHover'],[''],['HCB-1']]]);
+ASPx.createControl(ASPxClientPopupControl,'ctl00_TimeoutControl1_TimeoutPopup','ClientTimeoutPopup',{'callBack':function(arg) { WebForm_DoCallback('ctl00$TimeoutControl1$TimeoutPopup',arg,ASPx.Callback,'ctl00_TimeoutControl1_TimeoutPopup',ASPx.CallbackError,true); },'uniqueID':'ctl00$TimeoutControl1$TimeoutPopup','popupAnimationType':'auto','closeAction':'CloseButton','closeOnEscape':true,'popupHorizontalAlign':'WindowCenter','popupVerticalAlign':'WindowCenter','isPopupPositionCorrectionOn':false,'allowDragging':true,'modal':true,'width':640,'widthFromServer':true,'height':83,'autoUpdatePosition':true,'adaptivityEnabled':true,'switchAtWindowInnerWidth':90000,'modalVerticalAlign':'WindowCenter','modalMinHeight':'55%','modalMaxHeight':'55%','modalMinWidth':'55%','modalMaxWidth':'55%'});
+
+//-->
+   </script>
+   <script id="dxss_798074875" type="text/javascript">
+    <!--
+var dxo = ASPx.GetGlobalEvents();
+dxo.SetEvents({'ControlsInitialized':SessionTimeout.schedulePopup});
+
+//-->
+   </script>
+   <script id="dxss_764294356" type="text/javascript">
+    <!--
+ASPx.createControl(ASPxClientCallback,'ctl00_TimeoutControl1_KeepAliveHelper','ClientKeepAliveHelper',{'callBack':function(arg) { WebForm_DoCallback('ctl00$TimeoutControl1$KeepAliveHelper',arg,ASPx.Callback,'ctl00_TimeoutControl1_KeepAliveHelper',ASPx.CallbackError,true); },'uniqueID':'ctl00$TimeoutControl1$KeepAliveHelper'});
+
+//-->
+   </script>
+   <script type="text/javascript">
+    //<![CDATA[
+
+var callBackFrameUrl='/pmd/WebResource.axd?d=YRBNoL9Mxyydt-Obwqrttu8FVG4txriQIccXr1BAl2kqgGCEx7d3V_UgLb0AzuE77A0VQQEbywUOZP8OBXj8JZQBUZ90CpnIDBjBhmA16zU1&t=638563344220000000';
+WebForm_InitCallback();//]]>
+   </script>
+  </form>
+ </body>
+</html>

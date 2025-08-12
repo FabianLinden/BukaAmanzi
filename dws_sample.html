@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><link href="/pmd/DXR.axd?r=0_1204,1_66,1_67,1_68,0_1208,0_2662,0_2667,1_205,0_1060,0_1055-22mkn" rel="stylesheet" type="text/css"/><meta charset="utf-8"/><title>
+	DWS Project Dashboard
+</title><meta content="width=device-width, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0" name="viewport"/>
+<link href="LG_Content/Content.css" rel="stylesheet" type="text/css"/>
+<link href="LG_Content/Layout.css" rel="stylesheet" type="text/css"/>
+<script src="LG_Content/Script.js" type="text/javascript"></script>
+<script src="LG_Content/cookieconcent.js" type="text/javascript"></script>
+<link href="leaflet/leaflet.css" rel="stylesheet"/>
+<script src="leaflet/leaflet.js"></script>
+<script src="Scripts/jquery-3.4.1.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
+<script src="Scripts/Duplicate.js" type="text/javascript"></script>
+<script type="text/javascript">
+        $(document).ready(function () {
+            if (window.IsDuplicate()) {
+                swal("Oops", "This is a duplicate window\n\n Please close this window/tab...", "error");
+                window.close();
+            }
+        });
+        function OnItemClick(s, e) {
+            if (e.item.name.startsWith("MenuLogin")) {
+                e.processOnServer = false;
+                pcLogin.Show();
+            }
+            if (e.item.name.startsWith("MenuOnlyLinked")) {
+                e.processOnServer = false;
+                popupControlLinkedAreSure.Show();
+            }
+        }
+
+        // Create cookie
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        // Delete cookie
+        function deleteCookie(cname) {
+            const d = new Date();
+            d.setTime(d.getTime() + (24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=;" + expires + ";path=/";
+        }
+
+        // Read cookie
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        // Set cookie consent
+        function acceptCookieConsent() {
+            deleteCookie('pmd_user_cookie_consent');
+            setCookie('pmd_user_cookie_consent', 1, 30);
+            document.getElementById("cookieNotice").style.display = "none";
+        }
+        // Set cookie consent
+        function rejectCookieConsent() {
+            deleteCookie('pmd_user_cookie_consent');
+            setCookie('pmd_user_cookie_consent', 0, 30);
+            document.getElementById("cookieNotice").style.display = "none";
+        }
+
+    </script>
+</head>
+<body data-resource-set="Resources">
+<form action="./level.aspx" class="form" id="aspnetForm" method="post">
+<div class="aspNetHidden">
+<input id="__EVENTTARGET" name="__EVENTTARGET" type="hidden" value=""/>
+<input id="__EVENTARGUMENT" name="__EVENTARGUMENT" type="hidden" value=""/>
+<input id="__VIEWSTATE" name="__VIEWSTATE" type="hidden" value="LS6nOfZcF8Z3MSa7fxsX3YdIkvL20cwRzB/WK5hyuUJn2BuxXdeLMc4pJRAQNePBgL1HxtrCvqJZpp2dMpF4IqoO7vty1rIusRnNJOCShIu8bF6F7d1oQ+mc9nQqNXhFFimZOmkfTVkWk7ZCSoJRvwUppKYUXwWM77teIoa8uv0FnDEnm3IOQXSX0lb82SWO7Dfmw5raDNrxDQBHxBz9pNTVlTbWu02puuhZNteez/zhxuUdxip0G3tBSOztYJHBhNG1QDNOmbujyvSD/xDwqCFSIj0pGb8+A047Jdcu8vYcrhLOgYu90F5McLDFQQ+a39q9BFl6o55clGpMGw9J5mwEaljX+H4dtt4Aj9EgonP/RP31fMNeYR9leG5V4whOm2j/giACzIHKsU5IUcBk7kpNcvk0jdxd3gClAGIq1z7Vfr0MCxHPPbdeYiu+1Gv9xtSNqdJMBfQofZNVS4Q9d8zBSqSV6Mwe3Z8izRl1SpgXOUnWW2sluqrBZQOlpba10G8J4ngC6WOQ7uyVEY1ZE4C4r2tFnzk/oUc0XdQFZykYq/8Qos9CxBl42cd50+PhXKq/eFwYBZFmVqJHfTkrYxsXou4PQjFr7RyTwyfbtuqvkQw/hUnNKTlrLVABQQGD+Ew03LzSAriDpANspfgN6LOfRvNALqEnn0yjXTk6K+L6Pjf+TP7x0OqrY/7l0kB8RVWtaizR3jY2Omh27ZZsSgXC6Wa2dYvAw5j5sKk2HwqmNEza2esj97dqd90FLRGNe3ZU3rNNqu4zb8VzhGFyYjjUyxD/4vwvSeW3xBdF/LNnUGlY0zaF8T4oykI8PSzsI2+BqEqbN2mqA91Hx8eLdpWgAa3+MmqQc6qdqfcMiRpFgk9EbuIgIvAIKwQbc29oWHxxDMhQTXOS1hGSi3maGqjXwd+AF4f36eyVCHibsM2rF7rZew1kjwCqtUnxLn/oJZRfbWyr2NcFp7TSGKXL4NyGEP3ZWluh7Md1sKk7jitXwM/IzxflEH+RjcXkjYciBZ1za9q0QIZgFYWperny5/BoA+DjVnXcynMbLbrEgPFS1VM1HkH0wsNPAcHiqikNaK0uEykTJUh5L4yYBhzM3IkmAgD6Zd0JqewoIkW1HkzUpNzXm92KEF6vGJc8o9yfgsbGz/AiYCmvMb1AJZ6c10QDxIlgXy6e+07B0gfc0xAsNUvJWwlSrVqjBefJpb80bbJDtqavEG3WN/qMZ0StJ6tA3yTdJm8BTudK72fE

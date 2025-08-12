@@ -260,12 +260,6 @@ class EnhancedDWSMonitor:
     async def _scrape_real_dws_data(self, client: httpx.AsyncClient) -> Dict[str, Any]:
         """Scrape real data from DWS Project Monitoring Dashboard"""
         try:
-            # First, try to access the main DWS PMD page
-            main_response = await client.get(self.dws_config['base_url'])
-            main_response.raise_for_status()
-            
-            soup = BeautifulSoup(main_response.content, 'html.parser')
-            
             # Initialize data structure
             scraped_data = {
                 'projects': [],
@@ -274,48 +268,47 @@ class EnhancedDWSMonitor:
                 'source_url': self.dws_config['base_url']
             }
             
-            # Look for project data tables or containers
-            project_tables = soup.find_all('table', class_=re.compile(r'(project|data|grid)', re.I))
-            project_divs = soup.find_all('div', class_=re.compile(r'(project|item|card)', re.I))
+            # Step 1: Try to access main page and look for data endpoints
+            main_response = await client.get(self.dws_config['base_url'])
+            main_response.raise_for_status()
+            soup = BeautifulSoup(main_response.content, 'html.parser')
             
-            # Try to extract project information from tables
-            for table in project_tables:
-                rows = table.find_all('tr')
-                if len(rows) > 1:  # Has header and data rows
-                    headers = [th.get_text(strip=True) for th in rows[0].find_all(['th', 'td'])]
-                    
-                    for row in rows[1:]:
-                        cells = [td.get_text(strip=True) for td in row.find_all('td')]
-                        if len(cells) >= 3:  # Minimum viable project data
-                            project = self._extract_project_from_cells(headers, cells)
-                            if project:
-                                scraped_data['projects'].append(project)
+            # Step 2: Look for AJAX/API endpoints in JavaScript
+            ajax_endpoints = await self._discover_ajax_endpoints(client, soup)
             
-            # Try to extract from structured divs/cards
-            for div in project_divs:
-                project = self._extract_project_from_div(div)
-                if project:
-                    scraped_data['projects'].append(project)
+            # Step 3: Try to get data from discovered endpoints
+            for endpoint in ajax_endpoints:
+                try:
+                    projects = await self._fetch_from_ajax_endpoint(client, endpoint)
+                    if projects:
+                        scraped_data['projects'].extend(projects)
+                        logger.info(f"Retrieved {len(projects)} projects from endpoint: {endpoint}")
+                except Exception as e:
+                    logger.debug(f"Failed to get data from endpoint {endpoint}: {str(e)}")
             
-            # Look for municipality dropdown or list
-            municipality_selects = soup.find_all('select', id=re.compile(r'(munic|location)', re.I))
-            for select in municipality_selects:
-                options = select.find_all('option')
-                for option in options:
-                    if option.get('value') and option.get_text(strip=True):
-                        scraped_data['municipalities'].append({
-                            'name': option.get_text(strip=True),
-                            'code': option.get('value'),
-                            'province': self._extract_province_from_name(option.get_text(strip=True))
-                        })
+            # Step 4: Try ASP.NET postback to get data (DevExpress grid data)
+            postback_data = await self._try_aspnet_postback(client, soup)
+            if postback_data:
+                scraped_data['projects'].extend(postback_data)
             
-            # If we found projects, return the data
+            # Step 5: Parse any static data visible on the page
+            static_data = await self._parse_static_page_data(soup)
+            if static_data:
+                scraped_data['projects'].extend(static_data['projects'])
+                scraped_data['municipalities'].extend(static_data['municipalities'])
+            
+            # Step 6: If still no data, try alternative URLs
+            if not scraped_data['projects']:
+                alternative_data = await self._try_alternative_urls(client)
+                if alternative_data:
+                    scraped_data['projects'].extend(alternative_data)
+            
             if scraped_data['projects']:
                 logger.info(f"Successfully scraped {len(scraped_data['projects'])} projects from DWS")
                 return scraped_data
             else:
-                # Try alternative scraping methods if the structure has changed
-                return await self._try_alternative_scraping_methods(client, soup)
+                logger.warning("No projects found using enhanced scraping methods")
+                raise Exception("No project data found")
                 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error accessing DWS website: {e.response.status_code}")
@@ -539,6 +532,452 @@ class EnhancedDWSMonitor:
         # This would need a mapping of municipality names to provinces
         # For now, return empty string
         return self._extract_province_from_text(name)
+    
+    async def _discover_ajax_endpoints(self, client: httpx.AsyncClient, soup: BeautifulSoup) -> List[str]:
+        """Discover AJAX endpoints from JavaScript code"""
+        endpoints = set()
+        
+        try:
+            # Look for JavaScript files that might contain endpoint definitions
+            script_tags = soup.find_all('script', src=True)
+            
+            for script_tag in script_tags:
+                script_src = script_tag.get('src')
+                if script_src and not script_src.startswith('http'):
+                    try:
+                        if script_src.startswith('/'):
+                            script_url = f"https://ws.dws.gov.za{script_src}"
+                        else:
+                            script_url = f"https://ws.dws.gov.za/pmd/{script_src}"
+                        
+                        script_response = await client.get(script_url)
+                        if script_response.status_code == 200:
+                            script_content = script_response.text
+                            
+                            # Look for endpoint patterns in JavaScript
+                            endpoint_patterns = [
+                                r'["\']([^"\'\']*\.aspx[^"\'\']*)["\']',
+                                r'url["\']?\s*[:=]\s*["\']([^"\']*)["\']',
+                                r'ajax["\']?\s*[:=]\s*["\']([^"\']*)["\']',
+                                r'["\']([^"\'\']*api[^"\'\']*)["\']',
+                                r'["\']([^"\'\']*data[^"\'\']*\.json)["\']'
+                            ]
+                            
+                            for pattern in endpoint_patterns:
+                                matches = re.finditer(pattern, script_content, re.I)
+                                for match in matches:
+                                    endpoint = match.group(1)
+                                    if endpoint and not endpoint.endswith(('.js', '.css', '.png', '.jpg')):
+                                        endpoints.add(endpoint)
+                    except Exception:
+                        continue
+            
+            # Also check inline scripts
+            inline_scripts = soup.find_all('script', src=False)
+            for script in inline_scripts:
+                script_content = script.string or ""
+                
+                # Look for DevExpress callback URLs or AJAX endpoints
+                callback_patterns = [
+                    r'callBackUrl\s*=\s*["\']([^"\']+)["\']',
+                    r'WebResource\.axd\?[^"\'\']*',
+                    r'level\.aspx[^"\'\']*',
+                    r'["\']([^"\'\']*\.aspx\?[^"\'\']*)["\']'
+                ]
+                
+                for pattern in callback_patterns:
+                    matches = re.finditer(pattern, script_content, re.I)
+                    for match in matches:
+                        endpoint = match.group(1) if match.groups() else match.group(0)
+                        endpoints.add(endpoint)
+            
+        except Exception as e:
+            logger.debug(f"Error discovering AJAX endpoints: {e}")
+        
+        return list(endpoints)[:10]  # Limit to first 10 endpoints
+    
+    async def _fetch_from_ajax_endpoint(self, client: httpx.AsyncClient, endpoint: str) -> List[Dict[str, Any]]:
+        """Try to fetch project data from an AJAX endpoint"""
+        projects = []
+        
+        try:
+            # Construct full URL
+            if endpoint.startswith('http'):
+                url = endpoint
+            elif endpoint.startswith('/'):
+                url = f"https://ws.dws.gov.za{endpoint}"
+            else:
+                url = f"https://ws.dws.gov.za/pmd/{endpoint}"
+            
+            # Try different HTTP methods and parameters
+            methods_and_params = [
+                ('GET', {}),
+                ('POST', {}),
+                ('POST', {'action': 'getProjects'}),
+                ('POST', {'method': 'loadData'}),
+                ('GET', {'format': 'json'}),
+            ]
+            
+            for method, params in methods_and_params:
+                try:
+                    if method == 'GET':
+                        response = await client.get(url, params=params)
+                    else:
+                        response = await client.post(url, data=params)
+                    
+                    if response.status_code == 200:
+                        content_type = response.headers.get('content-type', '').lower()
+                        
+                        if 'json' in content_type:
+                            data = response.json()
+                            extracted_projects = self._extract_projects_from_json(data)
+                            if extracted_projects:
+                                projects.extend(extracted_projects)
+                                break
+                        
+                        elif 'html' in content_type:
+                            soup = BeautifulSoup(response.content, 'html.parser')
+                            extracted_projects = self._extract_projects_from_html(soup)
+                            if extracted_projects:
+                                projects.extend(extracted_projects)
+                                break
+                
+                except Exception:
+                    continue
+            
+        except Exception as e:
+            logger.debug(f"Error fetching from endpoint {endpoint}: {e}")
+        
+        return projects
+    
+    def _extract_projects_from_json(self, data: Any) -> List[Dict[str, Any]]:
+        """Extract project data from JSON response"""
+        projects = []
+        
+        try:
+            if isinstance(data, dict):
+                # Look for arrays that might contain project data
+                for key, value in data.items():
+                    if isinstance(value, list) and value:
+                        for item in value:
+                            if isinstance(item, dict) and self._looks_like_project(item):
+                                project = self._normalize_project_data(item)
+                                if project:
+                                    projects.append(project)
+                
+                # Also check if the data itself looks like a project
+                if self._looks_like_project(data):
+                    project = self._normalize_project_data(data)
+                    if project:
+                        projects.append(project)
+                        
+            elif isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict) and self._looks_like_project(item):
+                        project = self._normalize_project_data(item)
+                        if project:
+                            projects.append(project)
+                        
+        except Exception as e:
+            logger.debug(f"Error extracting projects from JSON: {e}")
+        
+        return projects
+    
+    def _extract_projects_from_html(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
+        """Extract project data from HTML response"""
+        projects = []
+        
+        try:
+            # Look for tables with project-like data
+            tables = soup.find_all('table')
+            for table in tables:
+                rows = table.find_all('tr')
+                if len(rows) > 1:
+                    headers = [th.get_text(strip=True).lower() for th in rows[0].find_all(['th', 'td'])]
+                    
+                    # Check if headers suggest project data
+                    project_indicators = ['project', 'name', 'municipality', 'status', 'budget', 'progress']
+                    if any(indicator in ' '.join(headers) for indicator in project_indicators):
+                        for row in rows[1:]:
+                            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+                            if len(cells) >= 3:
+                                project = self._extract_project_from_cells(headers, cells)
+                                if project:
+                                    projects.append(project)
+            
+            # Look for structured divs (like cards or panels)
+            project_containers = soup.find_all(['div', 'article'], class_=re.compile(r'(project|item|card|panel)', re.I))
+            for container in project_containers:
+                project = self._extract_project_from_div(container)
+                if project:
+                    projects.append(project)
+                    
+        except Exception as e:
+            logger.debug(f"Error extracting projects from HTML: {e}")
+        
+        return projects
+    
+    def _looks_like_project(self, data: dict) -> bool:
+        """Check if a dictionary looks like project data"""
+        if not isinstance(data, dict):
+            return False
+        
+        # Look for common project fields
+        project_fields = [
+            'project', 'name', 'title', 'municipality', 'location', 
+            'status', 'budget', 'cost', 'progress', 'contractor', 'description'
+        ]
+        
+        data_keys = [str(k).lower() for k in data.keys()]
+        matches = sum(1 for field in project_fields if any(field in key for key in data_keys))
+        
+        return matches >= 2  # At least 2 project-related fields
+    
+    def _normalize_project_data(self, raw_data: dict) -> Optional[Dict[str, Any]]:
+        """Normalize project data from various sources into standard format"""
+        try:
+            project = {
+                'external_id': f"DWS-AJAX-{datetime.utcnow().strftime('%Y%m%d')}-{abs(hash(str(raw_data)))}",
+                'source': 'dws_pmd_ajax',
+                'name': '',
+                'description': '',
+                'municipality': '',
+                'province': '',
+                'status': 'unknown',
+                'progress_percentage': 0,
+                'budget_allocated': 0.0,
+                'budget_spent': 0.0,
+                'contractor': '',
+                'project_type': 'water_infrastructure',
+                'last_updated': datetime.utcnow().isoformat(),
+            }
+            
+            # Map common field variations to standard fields
+            field_mappings = {
+                'name': ['name', 'title', 'project_name', 'projectname', 'project', 'description'],
+                'description': ['description', 'desc', 'details', 'summary'],
+                'municipality': ['municipality', 'location', 'city', 'area', 'region'],
+                'province': ['province', 'state', 'region'],
+                'status': ['status', 'state', 'phase', 'stage'],
+                'progress_percentage': ['progress', 'completion', 'percent', 'percentage'],
+                'budget_allocated': ['budget', 'cost', 'allocated', 'total_cost', 'amount'],
+                'budget_spent': ['spent', 'used', 'expended', 'actual'],
+                'contractor': ['contractor', 'company', 'vendor', 'supplier']
+            }
+            
+            # Extract data using field mappings
+            for standard_field, variations in field_mappings.items():
+                for variation in variations:
+                    for key, value in raw_data.items():
+                        if variation.lower() in str(key).lower():
+                            if standard_field in ['progress_percentage']:
+                                # Extract numeric value
+                                progress_match = re.search(r'(\d+)', str(value))
+                                if progress_match:
+                                    project[standard_field] = int(progress_match.group(1))
+                            elif standard_field in ['budget_allocated', 'budget_spent']:
+                                # Extract monetary value
+                                budget_match = re.search(r'([\d,\.]+)', str(value).replace(' ', ''))
+                                if budget_match:
+                                    try:
+                                        amount = float(budget_match.group(1).replace(',', ''))
+                                        # Check for multipliers
+                                        value_str = str(value).lower()
+                                        if 'million' in value_str or 'm' in value_str:
+                                            amount *= 1000000
+                                        elif 'billion' in value_str or 'b' in value_str:
+                                            amount *= 1000000000
+                                        project[standard_field] = amount
+                                    except ValueError:
+                                        pass
+                            else:
+                                project[standard_field] = str(value).strip()
+                            break
+                    if project[standard_field]:  # Stop if we found a value
+                        break
+            
+            # Only return if we have essential data
+            if project['name'] and len(project['name']) > 3:
+                return project
+            
+        except Exception as e:
+            logger.debug(f"Error normalizing project data: {e}")
+        
+        return None
+    
+    async def _try_aspnet_postback(self, client: httpx.AsyncClient, soup: BeautifulSoup) -> List[Dict[str, Any]]:
+        """Try ASP.NET postback to get DevExpress grid data"""
+        projects = []
+        
+        try:
+            # Find ASP.NET form data needed for postback
+            form = soup.find('form')
+            if not form:
+                return projects
+            
+            # Extract ASP.NET viewstate and form data
+            form_data = {}
+            
+            # Get hidden fields
+            hidden_fields = ['__VIEWSTATE', '__VIEWSTATEGENERATOR', '__EVENTVALIDATION', '__VIEWSTATEENCRYPTED']
+            for field_name in hidden_fields:
+                field = soup.find('input', {'name': field_name})
+                if field:
+                    form_data[field_name] = field.get('value', '')
+            
+            # Try different postback targets that might load project data
+            postback_targets = [
+                ('ctl00$ContentPlaceHolder$ProjectsGrid', ''),
+                ('ctl00$ContentPlaceHolder$DataGrid', ''),
+                ('ctl00$MainContent$ProjectsList', ''),
+                ('ctl00$ContentPlaceHolder$RefreshButton', ''),
+            ]
+            
+            for target, argument in postback_targets:
+                try:
+                    # Add postback parameters
+                    postback_data = form_data.copy()
+                    postback_data['__EVENTTARGET'] = target
+                    postback_data['__EVENTARGUMENT'] = argument
+                    
+                    response = await client.post(self.dws_config['base_url'], data=postback_data)
+                    
+                    if response.status_code == 200:
+                        postback_soup = BeautifulSoup(response.content, 'html.parser')
+                        extracted_projects = self._extract_projects_from_html(postback_soup)
+                        if extracted_projects:
+                            projects.extend(extracted_projects)
+                            logger.info(f"Retrieved {len(extracted_projects)} projects via ASP.NET postback: {target}")
+                            break  # Stop if we found data
+                            
+                except Exception as e:
+                    logger.debug(f"Error with postback target {target}: {e}")
+                    
+        except Exception as e:
+            logger.debug(f"Error in ASP.NET postback: {e}")
+        
+        return projects
+    
+    async def _parse_static_page_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Parse any project data visible on the static page"""
+        static_data = {'projects': [], 'municipalities': []}
+        
+        try:
+            # Look for any visible project information in text
+            text_content = soup.get_text()
+            
+            # Search for project patterns in the page text
+            project_patterns = [
+                r'(\w+[\s\w]+(?:project|scheme|development|construction))',
+                r'(R\s?[\d,]+\s*(?:million|billion)\s*[\w\s]+(?:project|scheme))',
+                r'([A-Z][\w\s]{10,50}(?:Dam|Treatment|Supply|Infrastructure))',
+            ]
+            
+            potential_projects = set()
+            for pattern in project_patterns:
+                matches = re.finditer(pattern, text_content, re.I)
+                for match in matches:
+                    project_name = match.group(1).strip()
+                    if len(project_name) > 10 and len(project_name) < 100:
+                        potential_projects.add(project_name)
+            
+            # Convert potential projects to structured data
+            for i, project_name in enumerate(list(potential_projects)[:5]):
+                project = {
+                    'external_id': f"DWS-STATIC-{datetime.utcnow().strftime('%Y%m%d')}-{i+1}",
+                    'source': 'dws_pmd_static',
+                    'name': project_name,
+                    'description': f"Water infrastructure project: {project_name}",
+                    'municipality': '',
+                    'province': self._extract_province_from_text(project_name),
+                    'status': 'unknown',
+                    'progress_percentage': 0,
+                    'budget_allocated': 0.0,
+                    'budget_spent': 0.0,
+                    'contractor': '',
+                    'project_type': 'water_infrastructure',
+                    'last_updated': datetime.utcnow().isoformat(),
+                }
+                static_data['projects'].append(project)
+            
+            # Look for municipality references
+            municipality_patterns = [
+                r'([A-Z][\w\s]+(?:Municipality|Metro|City|District))',
+                r'(City of [A-Z][\w\s]+)',
+                r'([A-Z][\w\s]+Local Municipality)',
+            ]
+            
+            potential_municipalities = set()
+            for pattern in municipality_patterns:
+                matches = re.finditer(pattern, text_content, re.I)
+                for match in matches:
+                    muni_name = match.group(1).strip()
+                    if len(muni_name) > 5 and len(muni_name) < 50:
+                        potential_municipalities.add(muni_name)
+            
+            # Convert to structured municipality data
+            for muni_name in list(potential_municipalities)[:10]:
+                municipality = {
+                    'name': muni_name,
+                    'code': muni_name[:3].upper(),
+                    'province': self._extract_province_from_text(muni_name)
+                }
+                static_data['municipalities'].append(municipality)
+                
+        except Exception as e:
+            logger.debug(f"Error parsing static page data: {e}")
+        
+        return static_data
+    
+    async def _try_alternative_urls(self, client: httpx.AsyncClient) -> List[Dict[str, Any]]:
+        """Try alternative URLs that might contain project data"""
+        projects = []
+        
+        # Alternative URLs to try
+        alternative_urls = [
+            'https://ws.dws.gov.za/pmd/projects.aspx',
+            'https://ws.dws.gov.za/pmd/data.aspx',
+            'https://ws.dws.gov.za/pmd/dashboard.aspx',
+            'https://ws.dws.gov.za/pmd/reports.aspx',
+            'https://ws.dws.gov.za/api/projects',
+            'https://ws.dws.gov.za/data/projects.json',
+            'https://ws.dws.gov.za/pmd/level.aspx?view=projects',
+            'https://ws.dws.gov.za/pmd/level.aspx?action=list',
+        ]
+        
+        for url in alternative_urls:
+            try:
+                response = await client.get(url)
+                if response.status_code == 200:
+                    content_type = response.headers.get('content-type', '').lower()
+                    
+                    if 'json' in content_type:
+                        try:
+                            data = response.json()
+                            extracted_projects = self._extract_projects_from_json(data)
+                            if extracted_projects:
+                                projects.extend(extracted_projects)
+                                logger.info(f"Retrieved {len(extracted_projects)} projects from {url}")
+                        except json.JSONDecodeError:
+                            pass
+                    
+                    elif 'html' in content_type:
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        
+                        # Check if this page looks different from main page
+                        page_text = soup.get_text()[:1000].lower()
+                        if any(keyword in page_text for keyword in ['project', 'infrastructure', 'development']):
+                            extracted_projects = self._extract_projects_from_html(soup)
+                            if extracted_projects:
+                                projects.extend(extracted_projects)
+                                logger.info(f"Retrieved {len(extracted_projects)} projects from {url}")
+                
+                # Don't break on first success, try all URLs to get maximum data
+                
+            except Exception as e:
+                logger.debug(f"Error accessing alternative URL {url}: {e}")
+        
+        return projects
 
     def calculate_content_hash(self, data: dict) -> str:
         """Calculate SHA-256 hash of content for change detection."""

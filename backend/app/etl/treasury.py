@@ -48,81 +48,228 @@ class MunicipalTreasuryETL:
             await self.session.aclose()
 
     async def fetch_municipalities(self) -> List[Dict[str, Any]]:
-        """Fetch all municipalities from treasury API"""
+        """Fetch all municipalities from treasury API with pagination"""
         try:
             logger.info("Attempting to fetch municipalities from Treasury API")
-            url = f"{self.config['base_url']}/cubes/municipalities/facts"
-            params = {
-                'cut': 'demarcation.type:"municipality"',
-                'drilldown': 'municipality',
-                'format': 'json'
-            }
+            all_municipalities = []
             
-            response = await self.session.get(url, params=params)
-            response.raise_for_status()
+            # Try different endpoint variations and pagination strategies
+            endpoint_configs = [
+                {
+                    'url': f"{self.config['base_url']}/cubes/municipalities/facts",
+                    'params': {'drilldown': 'municipality', 'format': 'json', 'pagesize': '1000'}
+                },
+                {
+                    'url': f"{self.config['base_url']}/cubes/municipalities/facts", 
+                    'params': {'drilldown': 'municipality', 'format': 'json', 'page_size': '1000'}
+                },
+                {
+                    'url': f"{self.config['base_url']}/cubes/municipalities/facts",
+                    'params': {'format': 'json'}
+                },
+                {
+                    'url': f"{self.config['base_url']}/municipalities",
+                    'params': {'format': 'json'}
+                }
+            ]
             
-            data = response.json()
-            municipalities = []
+            for config in endpoint_configs:
+                try:
+                    municipalities = await self._fetch_municipalities_with_pagination(
+                        config['url'], config['params']
+                    )
+                    if municipalities:
+                        all_municipalities = municipalities
+                        logger.info(f"Successfully fetched {len(municipalities)} municipalities from Treasury API using {config['url']}")
+                        break
+                        
+                except Exception as e:
+                    logger.debug(f"Failed with endpoint {config['url']}: {str(e)}")
+                    continue
             
-            for item in data.get('cells', []):
-                muni_data = item.get('municipality', {})
-                municipalities.append({
-                    'code': muni_data.get('code'),
-                    'name': muni_data.get('name'),
-                    'province': muni_data.get('province_name'),
-                    'category': muni_data.get('category'),
-                    'demarcation_code': muni_data.get('demarcation_code'),
-                    'miif_category': muni_data.get('miif_category'),
-                })
-            
-            logger.info(f"Successfully fetched {len(municipalities)} municipalities from Treasury API")
-            return municipalities
+            return all_municipalities
             
         except Exception as e:
             logger.warning(f"Failed to fetch municipalities from Treasury API: {str(e)}. Using existing municipality data from database.")
             # Return empty list - we'll use municipalities already in database
             return []
+    
+    async def _fetch_municipalities_with_pagination(self, base_url: str, base_params: dict) -> List[Dict[str, Any]]:
+        """Fetch municipalities with automatic pagination"""
+        all_municipalities = []
+        page = 0
+        page_size = 100
+        max_pages = 50  # Safety limit
+        
+        while page < max_pages:
+            try:
+                # Try different pagination parameter formats
+                for page_param, size_param in [('page', 'pagesize'), ('offset', 'limit'), ('page', 'page_size')]:
+                    params = base_params.copy()
+                    params[page_param] = str(page * page_size)
+                    params[size_param] = str(page_size)
+                    
+                    response = await self.session.get(base_url, params=params)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        
+                        # Handle different response formats
+                        municipalities_batch = []
+                        
+                        if isinstance(data, dict):
+                            # Look for data in different possible locations
+                            for data_key in ['data', 'cells', 'results', 'municipalities']:
+                                if data_key in data and isinstance(data[data_key], list):
+                                    raw_municipalities = data[data_key]
+                                    break
+                            else:
+                                raw_municipalities = [data] if data else []
+                        elif isinstance(data, list):
+                            raw_municipalities = data
+                        else:
+                            raw_municipalities = []
+                        
+                        # Process municipalities
+                        for item in raw_municipalities:
+                            if isinstance(item, dict):
+                                # Handle nested municipality data
+                                muni_data = item.get('municipality', item)
+                                if isinstance(muni_data, dict):
+                                    municipality = {
+                                        'code': muni_data.get('code') or muni_data.get('demarcation_code'),
+                                        'name': muni_data.get('name') or muni_data.get('label'),
+                                        'province': (muni_data.get('province_name') or 
+                                                   muni_data.get('province') or 
+                                                   muni_data.get('region')),
+                                        'category': muni_data.get('category'),
+                                        'demarcation_code': muni_data.get('demarcation_code'),
+                                        'miif_category': muni_data.get('miif_category'),
+                                    }
+                                    
+                                    # Only add if we have essential data
+                                    if municipality['code'] or municipality['name']:
+                                        municipalities_batch.append(municipality)
+                        
+                        if not municipalities_batch:
+                            # No more data, stop pagination
+                            break
+                            
+                        all_municipalities.extend(municipalities_batch)
+                        logger.debug(f"Fetched page {page + 1}: {len(municipalities_batch)} municipalities")
+                        
+                        # Check if we got less than page_size, indicating last page
+                        if len(municipalities_batch) < page_size:
+                            break
+                        
+                        page += 1
+                        
+                        # Add delay between requests to be respectful
+                        import asyncio
+                        await asyncio.sleep(0.1)
+                        
+                        break  # Successfully got data with this pagination format
+                    
+                    elif response.status_code == 404:
+                        # Try next pagination format
+                        continue
+                    else:
+                        # Other error, stop trying this endpoint
+                        raise httpx.HTTPStatusError(f"HTTP {response.status_code}", request=response.request, response=response)
+                
+                else:
+                    # None of the pagination formats worked
+                    break
+            
+            except Exception as e:
+                logger.debug(f"Error fetching page {page}: {str(e)}")
+                break
+        
+        return all_municipalities
 
+    async def list_available_cubes(self) -> List[str]:
+        """List all available cubes from the Treasury API"""
+        try:
+            cubes_url = f"{self.config['base_url']}/cubes"
+            response = await self.session.get(cubes_url)
+            response.raise_for_status()
+            
+            data = response.json()
+            cubes = []
+            
+            if isinstance(data, list):
+                cubes = [cube.get('name', '') for cube in data if isinstance(cube, dict)]
+            elif isinstance(data, dict) and 'cubes' in data:
+                cubes = [cube.get('name', '') for cube in data['cubes'] if isinstance(cube, dict)]
+            
+            logger.info(f"Found {len(cubes)} available cubes: {cubes}")
+            return cubes
+            
+        except Exception as e:
+            logger.warning(f"Failed to list cubes: {str(e)}")
+            # Return commonly known cubes as fallback
+            return ['incexp', 'capital', 'cflow', 'bsheet', 'grants', 'aged_creditor', 'aged_debtor']
+    
     async def fetch_financial_data(self, municipality_code: str, 
                                  financial_year: int = None) -> Dict[str, Any]:
-        """Fetch financial data for a specific municipality"""
+        """Fetch financial data for a specific municipality with enhanced pagination"""
         try:
             if financial_year is None:
                 financial_year = datetime.now().year
 
             # Try to fetch real data first
             try:
-                # Fetch budget data
-                budget_url = f"{self.config['base_url']}/cubes/incexp/facts"
-                budget_params = {
-                    'cut': f'municipality.demarcation_code:"{municipality_code}"|financial_year_end.year:{financial_year}',
-                    'drilldown': 'item.code|financial_period.period',
-                    'format': 'json'
+                # Get available cubes to determine what data we can fetch
+                available_cubes = await self.list_available_cubes()
+                
+                # Fetch data from multiple cubes with pagination
+                all_financial_data = {}
+                
+                # Define cube configurations for different data types
+                cube_configs = {
+                    'incexp': {
+                        'drilldown': 'item.code|financial_period.period',
+                        'measures': ['budget.sum', 'actual.sum']
+                    },
+                    'capital': {
+                        'drilldown': 'item.label|financial_period.period', 
+                        'measures': ['budget.sum', 'actual.sum']
+                    },
+                    'cflow': {
+                        'drilldown': 'item.label|financial_period.period',
+                        'measures': ['amount.sum']
+                    },
+                    'bsheet': {
+                        'drilldown': 'item.code|financial_period.period',
+                        'measures': ['amount.sum']
+                    },
+                    'grants': {
+                        'drilldown': 'grant.label|financial_period.period',
+                        'measures': ['amount.sum']
+                    }
                 }
                 
-                budget_response = await self.session.get(budget_url, params=budget_params)
-                budget_response.raise_for_status()
-                budget_data = budget_response.json()
-
-                # Fetch capital expenditure data
-                capex_url = f"{self.config['base_url']}/cubes/capital/facts"
-                capex_params = {
-                    'cut': f'municipality.demarcation_code:"{municipality_code}"|financial_year_end.year:{financial_year}',
-                    'drilldown': 'item.label|financial_period.period',
-                    'format': 'json'
-                }
+                # Fetch data from each available cube
+                for cube_name in available_cubes:
+                    if cube_name in cube_configs:
+                        try:
+                            cube_data = await self._fetch_cube_data_paginated(
+                                cube_name, municipality_code, financial_year, cube_configs[cube_name]
+                            )
+                            if cube_data:
+                                all_financial_data[cube_name] = cube_data
+                                logger.debug(f"Fetched {len(cube_data.get('cells', []))} records from {cube_name} cube")
+                        except Exception as cube_error:
+                            logger.debug(f"Failed to fetch data from {cube_name} cube: {str(cube_error)}")
+                            continue
                 
-                capex_response = await self.session.get(capex_url, params=capex_params)
-                capex_response.raise_for_status()
-                capex_data = capex_response.json()
-
-                # Process and structure the data
-                financial_summary = self._process_financial_data(
-                    municipality_code, financial_year, budget_data, capex_data
+                # Process combined data from all cubes
+                financial_summary = self._process_multi_cube_financial_data(
+                    municipality_code, financial_year, all_financial_data
                 )
                 
                 if financial_summary['total_budget'] > 0 or financial_summary['total_actual'] > 0:
-                    logger.info(f"Successfully fetched real financial data for {municipality_code}")
+                    logger.info(f"Successfully fetched real financial data for {municipality_code} from {len(all_financial_data)} cubes")
                     return financial_summary
                 else:
                     raise Exception("No meaningful financial data returned from API")
@@ -137,6 +284,203 @@ class MunicipalTreasuryETL:
         except Exception as e:
             logger.error(f"Error fetching financial data for {municipality_code}: {str(e)}")
             raise
+    
+    async def _fetch_cube_data_paginated(self, cube_name: str, municipality_code: str, 
+                                       financial_year: int, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetch data from a specific cube with pagination"""
+        all_data = {'cells': []}
+        page = 0
+        page_size = 1000
+        max_pages = 20  # Safety limit
+        
+        base_url = f"{self.config['base_url']}/cubes/{cube_name}/facts"
+        base_params = {
+            'cut': f'municipality.demarcation_code:"{municipality_code}"|financial_year_end.year:{financial_year}',
+            'drilldown': config['drilldown'],
+            'format': 'json'
+        }
+        
+        # Add measures if specified
+        if config.get('measures'):
+            base_params['aggregates'] = '|'.join(config['measures'])
+        
+        while page < max_pages:
+            try:
+                # Try different pagination formats
+                for page_param, size_param in [('page', 'pagesize'), ('offset', 'limit'), ('page', 'page_size')]:
+                    params = base_params.copy()
+                    params[page_param] = str(page)
+                    params[size_param] = str(page_size)
+                    
+                    response = await self.session.get(base_url, params=params)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        
+                        # Extract cells from response
+                        cells = []
+                        if isinstance(data, dict):
+                            if 'cells' in data:
+                                cells = data['cells']
+                            elif 'data' in data:
+                                cells = data['data']
+                            elif 'results' in data:
+                                cells = data['results']
+                        elif isinstance(data, list):
+                            cells = data
+                        
+                        if not cells:
+                            # No more data
+                            return all_data
+                        
+                        all_data['cells'].extend(cells)
+                        logger.debug(f"Fetched page {page + 1} from {cube_name}: {len(cells)} records")
+                        
+                        # Check if we got fewer records than requested (last page)
+                        if len(cells) < page_size:
+                            return all_data
+                        
+                        page += 1
+                        
+                        # Rate limiting
+                        import asyncio
+                        await asyncio.sleep(0.1)
+                        
+                        break  # Successfully got data with this pagination format
+                    
+                    elif response.status_code == 404:
+                        continue  # Try next pagination format
+                    else:
+                        raise httpx.HTTPStatusError(f"HTTP {response.status_code}", 
+                                                   request=response.request, response=response)
+                
+                else:
+                    # No pagination format worked
+                    break
+                    
+            except Exception as e:
+                logger.debug(f"Error fetching page {page} from {cube_name}: {str(e)}")
+                break
+        
+        return all_data
+    
+    def _process_multi_cube_financial_data(self, municipality_code: str, financial_year: int,
+                                         cube_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process financial data from multiple cubes into structured format"""
+        
+        # Initialize financial summary
+        summary = {
+            'municipality_code': municipality_code,
+            'financial_year': financial_year,
+            'total_budget': 0.0,
+            'total_actual': 0.0,
+            'total_capex_budget': 0.0,
+            'total_capex_actual': 0.0,
+            'water_related_capex': 0.0,
+            'infrastructure_budget': 0.0,
+            'service_delivery_budget': 0.0,
+            'revenue': 0.0,
+            'expenditure': 0.0,
+            'surplus_deficit': 0.0,
+            'cash_available': 0.0,
+            'detailed_items': [],
+            'grant_income': 0.0,
+            'cash_flow': 0.0,
+            'balance_sheet_total': 0.0
+        }
+
+        # Process income and expenditure data
+        if 'incexp' in cube_data:
+            for cell in cube_data['incexp'].get('cells', []):
+                item_code = cell.get('item.code', '')
+                item_label = cell.get('item.label', '')
+                period = cell.get('financial_period.period', '')
+                budget_value = float(cell.get('budget.sum', 0))
+                actual_value = float(cell.get('actual.sum', 0))
+
+                # Categorize items
+                if 'water' in item_code.lower() or 'water' in item_label.lower():
+                    summary['water_related_capex'] += actual_value
+                
+                if 'infrastructure' in item_code.lower() or 'infrastructure' in item_label.lower():
+                    summary['infrastructure_budget'] += budget_value
+                
+                # Revenue vs expenditure classification
+                if any(keyword in item_code.lower() for keyword in ['revenue', 'income', 'rates', 'taxes']):
+                    summary['revenue'] += actual_value
+                else:
+                    summary['expenditure'] += actual_value
+                
+                summary['total_budget'] += budget_value
+                summary['total_actual'] += actual_value
+
+                summary['detailed_items'].append({
+                    'cube': 'incexp',
+                    'item_code': item_code,
+                    'item_label': item_label,
+                    'period': period,
+                    'budget_value': budget_value,
+                    'actual_value': actual_value
+                })
+
+        # Process capital expenditure data
+        if 'capital' in cube_data:
+            for cell in cube_data['capital'].get('cells', []):
+                item_label = cell.get('item.label', '').lower()
+                period = cell.get('financial_period.period', '')
+                budget_value = float(cell.get('budget.sum', 0))
+                actual_value = float(cell.get('actual.sum', 0))
+                
+                summary['total_capex_budget'] += budget_value
+                summary['total_capex_actual'] += actual_value
+                
+                if 'water' in item_label or 'sanitation' in item_label:
+                    summary['water_related_capex'] += actual_value
+                
+                summary['detailed_items'].append({
+                    'cube': 'capital',
+                    'item_label': item_label,
+                    'period': period,
+                    'budget_value': budget_value,
+                    'actual_value': actual_value
+                })
+        
+        # Process grants data
+        if 'grants' in cube_data:
+            for cell in cube_data['grants'].get('cells', []):
+                grant_label = cell.get('grant.label', '')
+                amount = float(cell.get('amount.sum', 0))
+                summary['grant_income'] += amount
+                
+                summary['detailed_items'].append({
+                    'cube': 'grants',
+                    'grant_label': grant_label,
+                    'amount': amount
+                })
+        
+        # Process cash flow data
+        if 'cflow' in cube_data:
+            for cell in cube_data['cflow'].get('cells', []):
+                item_label = cell.get('item.label', '')
+                amount = float(cell.get('amount.sum', 0))
+                
+                if 'cash' in item_label.lower():
+                    summary['cash_available'] += amount
+                
+                summary['cash_flow'] += amount
+        
+        # Process balance sheet data
+        if 'bsheet' in cube_data:
+            for cell in cube_data['bsheet'].get('cells', []):
+                amount = float(cell.get('amount.sum', 0))
+                summary['balance_sheet_total'] += amount
+
+        # Calculate key metrics
+        summary['surplus_deficit'] = summary['revenue'] - summary['expenditure']
+        summary['budget_variance'] = ((summary['total_actual'] - summary['total_budget']) / 
+                                     summary['total_budget'] * 100) if summary['total_budget'] > 0 else 0
+
+        return summary
 
     def _process_financial_data(self, municipality_code: str, financial_year: int,
                               budget_data: Dict, capex_data: Dict) -> Dict[str, Any]:
