@@ -438,34 +438,77 @@ class ETLManager:
             })
             
     async def _execute_dws_sync(self, job: ETLJob) -> Dict[str, Any]:
-        """Execute DWS data synchronization"""
-        job.progress_percentage = 10
-        
-        # Poll DWS data with change detection
-        await self.dws_monitor.poll_with_change_detection()
-        job.progress_percentage = 100
-        
-        return {
-            'source': 'dws',
-            'status': 'completed',
-            'timestamp': datetime.utcnow().isoformat()
-        }
+        """Execute DWS data synchronization with progress reporting"""
+        try:
+            job.progress_percentage = 5
+            logger.info(f"Starting DWS sync job {job.job_id}")
+            
+            job.progress_percentage = 10
+            logger.info(f"DWS sync job {job.job_id}: Initializing scraper")
+            
+            job.progress_percentage = 20
+            logger.info(f"DWS sync job {job.job_id}: Connecting to DWS website")
+            
+            # Poll DWS data with change detection
+            job.progress_percentage = 30
+            logger.info(f"DWS sync job {job.job_id}: Starting comprehensive data scraping")
+            
+            # Create progress callback to update job progress
+            async def update_progress(percentage: int, message: str):
+                job.progress_percentage = percentage
+                logger.info(f"DWS sync job {job.job_id}: {message} ({percentage}%)")
+            
+            await self.dws_monitor.poll_with_change_detection(progress_callback=update_progress)
+            
+            job.progress_percentage = 90
+            logger.info(f"DWS sync job {job.job_id}: Processing scraped data")
+            
+            job.progress_percentage = 100
+            logger.info(f"DWS sync job {job.job_id}: Completed successfully")
+            
+            return {
+                'source': 'dws',
+                'status': 'completed',
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"DWS sync job {job.job_id} failed: {str(e)}")
+            raise
         
     async def _execute_treasury_sync(self, job: ETLJob) -> Dict[str, Any]:
-        """Execute Treasury data synchronization"""
-        job.progress_percentage = 10
+        """Execute Treasury data synchronization with progress reporting"""
+        try:
+            job.progress_percentage = 10
+            logger.info(f"Starting Treasury sync job {job.job_id}")
+            
+            # Use Treasury ETL with async context manager
+            async with MunicipalTreasuryETL(self.notification_manager) as treasury_etl:
+                job.progress_percentage = 20
+                logger.info(f"Treasury sync job {job.job_id}: Initializing treasury ETL")
+                
+                job.progress_percentage = 30
+                logger.info(f"Treasury sync job {job.job_id}: Fetching municipality data")
+                
+                # Create progress callback to update job progress
+                async def update_progress(percentage: int, message: str):
+                    job.progress_percentage = min(95, max(30, percentage))  # Keep between 30-95
+                    logger.info(f"Treasury sync job {job.job_id}: {message} ({job.progress_percentage}%)")
+                
+                await treasury_etl.poll_with_change_detection(progress_callback=update_progress)
+                
+                job.progress_percentage = 100
+                logger.info(f"Treasury sync job {job.job_id}: Completed successfully")
         
-        # Use Treasury ETL with async context manager
-        async with MunicipalTreasuryETL(self.notification_manager) as treasury_etl:
-            job.progress_percentage = 30
-            await treasury_etl.poll_with_change_detection()
-            job.progress_percentage = 100
-        
-        return {
-            'source': 'treasury',
-            'status': 'completed',
-            'timestamp': datetime.utcnow().isoformat()
-        }
+            return {
+                'source': 'treasury',
+                'status': 'completed',
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Treasury sync job {job.job_id} failed: {str(e)}")
+            raise
         
     async def _execute_correlation_analysis(self, job: ETLJob) -> Dict[str, Any]:
         """Execute correlation analysis"""

@@ -640,24 +640,24 @@ class MunicipalTreasuryETL:
         """Store financial data in database"""
         try:
             async with async_session_factory() as session:
-                # Find municipality
+                # Find municipality (use first match if multiple exist)
                 stmt = select(Municipality).where(
                     Municipality.code == financial_data['municipality_code']
                 )
                 result = await session.execute(stmt)
-                municipality = result.scalar_one_or_none()
+                municipality = result.scalars().first()
                 
                 if not municipality:
                     logger.warning(f"Municipality {financial_data['municipality_code']} not found")
                     return None
 
-                # Check if financial data already exists
+                # Check if financial data already exists (use first match if multiple exist)
                 stmt = select(FinancialData).where(
                     FinancialData.municipality_id == municipality.id,
                     FinancialData.financial_year == financial_data['financial_year']
                 )
                 result = await session.execute(stmt)
-                existing_data = result.scalar_one_or_none()
+                existing_data = result.scalars().first()
 
                 content_hash = calculate_content_hash(financial_data)
 
@@ -754,8 +754,8 @@ class MunicipalTreasuryETL:
             logger.error(f"Error storing financial data: {str(e)}")
             raise
 
-    async def sync_all_financial_data(self, financial_year: int = None) -> List[str]:
-        """Sync financial data for all municipalities"""
+    async def sync_all_financial_data(self, financial_year: int = None, progress_callback: Optional[callable] = None) -> List[str]:
+        """Sync financial data for all municipalities with progress reporting"""
         if financial_year is None:
             financial_year = datetime.now().year
             
@@ -765,10 +765,16 @@ class MunicipalTreasuryETL:
                 result = await session.execute(stmt)
                 municipalities = result.scalars().all()
                 
+                total_municipalities = len(municipalities)
                 synced_records = []
                 
-                for municipality in municipalities:
+                for i, municipality in enumerate(municipalities):
                     try:
+                        # Update progress
+                        if progress_callback:
+                            progress = 60 + int((i / total_municipalities) * 25)  # 60-85% range
+                            await progress_callback(progress, f"Syncing financial data for {municipality.name} ({i+1}/{total_municipalities})")
+                        
                         # Add rate limiting
                         import asyncio
                         await asyncio.sleep(self.config['rate_limit_delay'])
@@ -792,13 +798,19 @@ class MunicipalTreasuryETL:
             logger.error(f"Error in financial data sync: {str(e)}")
             raise
 
-    async def poll_with_change_detection(self) -> None:
+    async def poll_with_change_detection(self, progress_callback: Optional[callable] = None) -> None:
         """Poll treasury data with change detection and notifications"""
         try:
             logger.info("Starting Treasury data polling with change detection")
             
+            if progress_callback:
+                await progress_callback(35, "Fetching municipality data from Treasury API")
+            
             # Sync municipalities first
             municipalities = await self.fetch_municipalities()
+            
+            if progress_callback:
+                await progress_callback(45, "Processing municipality updates")
             
             # Update municipalities if needed
             async with async_session_factory() as session:
@@ -806,7 +818,7 @@ class MunicipalTreasuryETL:
                     if muni_data.get('code'):
                         stmt = select(Municipality).where(Municipality.code == muni_data['code'])
                         result = await session.execute(stmt)
-                        existing = result.scalar_one_or_none()
+                        existing = result.scalars().first()
                         
                         if not existing and muni_data.get('name'):
                             municipality = Municipality(
@@ -822,9 +834,15 @@ class MunicipalTreasuryETL:
                 
                 await session.commit()
             
+            if progress_callback:
+                await progress_callback(55, "Starting financial data synchronization")
+            
             # Sync financial data
             current_year = datetime.now().year
-            synced_records = await self.sync_all_financial_data(current_year)
+            synced_records = await self.sync_all_financial_data(current_year, progress_callback)
+            
+            if progress_callback:
+                await progress_callback(90, "Processing change notifications")
             
             # Notify about changes
             if synced_records:
@@ -834,9 +852,13 @@ class MunicipalTreasuryETL:
                     'changes': {'records_updated': len(synced_records)},
                     'timestamp': datetime.utcnow(),
                 })
+            
+            if progress_callback:
+                await progress_callback(95, "Treasury data polling completed")
                 
         except Exception as e:
             logger.error(f"Error in Treasury change detection polling: {e}")
             await self.notification_manager.notify_system_error(
                 "Treasury polling error", str(e)
             )
+            raise

@@ -50,14 +50,17 @@ export const BudgetChart: React.FC<BudgetChartProps> = ({
   };
 
   const formatCompactCurrency = (amount: number) => {
-    if (amount >= 1000000000) {
-      return `${currency} ${(amount / 1000000000).toFixed(1)}B`;
-    } else if (amount >= 1000000) {
-      return `${currency} ${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `${currency} ${(amount / 1000).toFixed(1)}K`;
+    // Ensure we're working with a valid number
+    const validAmount = Number(amount) || 0;
+    
+    if (validAmount >= 1000000000) {
+      return `R${(validAmount / 1000000000).toFixed(1)}B`;
+    } else if (validAmount >= 1000000) {
+      return `R${(validAmount / 1000000).toFixed(1)}M`;
+    } else if (validAmount >= 1000) {
+      return `R${(validAmount / 1000).toFixed(1)}K`;
     }
-    return formatCurrency(amount);
+    return formatCurrency(validAmount);
   };
 
   const chartOptions = {

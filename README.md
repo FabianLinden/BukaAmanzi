@@ -15,10 +15,12 @@
 ### 🎯 **Core Functionality**
 - **Real-time Project Monitoring** - Live updates via WebSocket connections
 - **Interactive Dashboard** - Comprehensive analytics with charts and visualizations
+- **Enhanced Project Selection** - User-selectable project progress tracking with intelligent filtering
 - **Project Management** - Detailed project tracking with progress indicators
 - **Community Reporting** - Public engagement and feedback system
-- **Geographic Mapping** - Interactive maps with project locations
+- **Geographic Mapping** - Interactive maps with clustering and data quality indicators
 - **Budget Transparency** - Financial tracking and spending visualization
+- **Data Quality Management** - Comprehensive data assessment and improvement tools
 
 ### 🎨 **Enhanced User Experience**
 - **Water-Themed Design** - Beautiful aquatic color palette and animations
@@ -199,12 +201,15 @@ Access the ETL system via the frontend "Data Sync" tab or API endpoints:
 
 ## 📊 Features Overview
 
-### **Dashboard Analytics**
+### **Enhanced Dashboard Analytics**
 - 📈 **Budget Charts** - Doughnut and bar charts for financial tracking
-- 📉 **Progress Tracking** - Timeline visualization with milestone markers
-- 🗺️ **Project Mapping** - Geographic distribution with status indicators
-- 📋 **Status Overview** - Real-time project status distribution
-- 🎯 **KPI Metrics** - Key performance indicators and statistics
+- 📉 **Interactive Progress Tracking** - User-selectable project progress with timeline visualization and milestone markers
+- 🎯 **Smart Project Selection** - Intelligent filtering of trackable projects (excludes template/demo data)
+- 📊 **Dynamic Progress Charts** - Real-time updates based on user project selection
+- 🗺️ **Advanced Project Mapping** - Geographic distribution with clustering, data quality indicators, and status-based styling
+- 📋 **Comprehensive Status Overview** - Real-time project status distribution with enhanced categorization
+- 🎯 **KPI Metrics** - Key performance indicators and statistics with enhanced calculations
+- 🎨 **Data Quality Integration** - Visual indicators for project data completeness and accuracy
 
 ### **Project Management**
 - 📋 **Project Cards** - Detailed project information with progress bars
@@ -323,16 +328,31 @@ The API is fully documented with OpenAPI/Swagger:
 - **ReDoc**: http://localhost:8000/redoc
 
 ### Key Endpoints (v1)
+
+#### Core Data Endpoints
 - GET /api/v1/projects — List projects with filtering, pagination
 - GET /api/v1/municipalities — List municipalities and stats
 - POST /api/v1/reports — Submit community reports
+
+#### ETL Management
 - POST /api/v1/etl/sync — Trigger ETL sync jobs (DWS, Treasury, Correlation)
 - GET /api/v1/etl/manager/status — ETL Manager status and metrics
 - POST /api/v1/etl/manager/start — Start ETL Manager
 - POST /api/v1/etl/manager/stop — Stop ETL Manager
+
+#### Data Quality & Analytics
+- GET /api/v1/data-quality/projects/{id}/assessment — Get project quality assessment
+- GET /api/v1/data-quality/projects/all — Get all projects quality assessments
+- GET /api/v1/data-quality/projects/filtered — Fetch projects by quality criteria
+- POST /api/v1/data-quality/geocoding/address — Geocode single address
+- POST /api/v1/data-quality/geocoding/projects/batch — Batch geocode projects
+- GET /api/v1/data-quality/stats — Overall data quality statistics
+- POST /api/v1/data-quality/improve/{id} — Improve project data quality
 - GET /api/v1/data/stats/data-quality — Data quality and completeness metrics
 - GET /api/v1/data/correlation/projects/{id} — Project financial correlation analysis
 - GET /api/v1/data/correlation/municipalities/{id} — Municipal investment overview
+
+#### Real-time Communication
 - WS /ws/projects — Real-time project updates (subscribe per entity or all)
 
 ## 🤝 Contributing

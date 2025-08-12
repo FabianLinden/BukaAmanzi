@@ -10,7 +10,10 @@
 - **Advanced Water-Themed UI**: 12+ custom CSS animations with canvas-based effects
 - **WebSocket Real-time Updates**: Live project status and financial data synchronization
 - **Intelligent Financial Correlation**: Cross-reference project budgets with municipal financial capacity
-- **Interactive Visualizations**: Charts.js integration with custom themes and Leaflet maps
+- **Interactive Visualizations**: Charts.js integration with custom themes and Leaflet maps with clustering
+- **Enhanced Dashboard**: User-selectable project progress tracking with intelligent filtering
+- **Data Quality Management**: Comprehensive assessment, geocoding services, and data improvement tools
+- **Advanced Mapping**: Leaflet MarkerCluster integration with data quality indicators
 - **Community Engagement**: Public reporting system with moderation capabilities
 - **Performance Optimized**: Efficient state management, caching, and responsive design
 
@@ -338,6 +341,98 @@ graph TB
     class DWS_CONNECTOR,MUNICIPAL_CONNECTOR external
 ```
 
+## 🔍 Data Quality Management Architecture
+
+```mermaid
+graph TB
+    subgraph "Data Quality System"
+        DATA_QUALITY_MGR[🔍 Data Quality Manager<br/>- Quality assessment<br/>- Score calculation<br/>- Improvement recommendations]
+        
+        subgraph "Quality Assessment Services"
+            QUALITY_SERVICE[📊 DataQualityService<br/>- Multi-dimensional scoring<br/>- Template detection<br/>- Improvement recommendations]
+            GEOCODING_SERVICE[🗺️ GeocodingService<br/>- Address geocoding<br/>- Multiple providers<br/>- Rate limiting & caching]
+            DATA_VALIDATOR[✅ DataValidator<br/>- Schema validation<br/>- Completeness checks<br/>- Constraint validation]
+        end
+        
+        subgraph "Quality Dimensions"
+            NAME_QUALITY[📝 Name Quality<br/>- Template detection<br/>- Meaningful naming<br/>- Uniqueness checks]
+            LOCATION_QUALITY[🗺️ Location Quality<br/>- Coordinate validation<br/>- Address completeness<br/>- Geographic accuracy]
+            FINANCIAL_QUALITY[💰 Financial Quality<br/>- Budget validation<br/>- Cost reasonableness<br/>- Spending tracking]
+            TEMPORAL_QUALITY[📅 Temporal Quality<br/>- Date validation<br/>- Timeline logic<br/>- Duration checks]
+            DESCRIPTIVE_QUALITY[📄 Descriptive Quality<br/>- Content richness<br/>- Detail completeness<br/>- Information value]
+            STATUS_QUALITY[🔄 Status Quality<br/>- Progress consistency<br/>- Status logic<br/>- Update frequency]
+        end
+    end
+    
+    subgraph "Geocoding Infrastructure"
+        subgraph "Geocoding Providers"
+            NOMINATIM[🗺️ Nominatim (OSM)<br/>- Primary provider<br/>- Open source<br/>- Global coverage]
+            PHOTON[📍 Photon<br/>- Fallback provider<br/>- OSM-based<br/>- Fast results]
+        end
+        
+        subgraph "Geocoding Support"
+            GEO_CACHE[💾 Geocoding Cache<br/>- Redis-based<br/>- Result caching<br/>- Performance optimization]
+            RATE_LIMITER[⏱️ Rate Limiter<br/>- Request throttling<br/>- Provider respect<br/>- Burst handling]
+            GEO_VALIDATOR[✅ Geographic Validator<br/>- South Africa bounds<br/>- Coordinate validation<br/>- Accuracy assessment]
+        end
+    end
+    
+    subgraph "Data Quality APIs"
+        ASSESSMENT_API[📊 Assessment API<br/>- Project quality scoring<br/>- Batch assessments<br/>- Filter by quality]
+        GEOCODING_API[🗺️ Geocoding API<br/>- Address geocoding<br/>- Batch processing<br/>- Database updates]
+        IMPROVEMENT_API[🔧 Improvement API<br/>- Data enhancement<br/>- Quality upgrades<br/>- Automated fixes]
+        STATS_API[📈 Statistics API<br/>- Quality metrics<br/>- Completeness stats<br/>- Trend analysis]
+    end
+    
+    subgraph "Frontend Integration"
+        QUALITY_DASHBOARD[📊 Quality Dashboard<br/>- Quality overview<br/>- Interactive filters<br/>- Improvement actions]
+        MAP_INTEGRATION[🗺️ Map Integration<br/>- Quality indicators<br/>- Clustering by quality<br/>- Visual feedback]
+        PROJECT_ENHANCEMENT[🔧 Project Enhancement<br/>- Inline improvements<br/>- Quality suggestions<br/>- Bulk actions]
+    end
+    
+    %% Connections
+    DATA_QUALITY_MGR --> QUALITY_SERVICE
+    DATA_QUALITY_MGR --> GEOCODING_SERVICE
+    DATA_QUALITY_MGR --> DATA_VALIDATOR
+    
+    QUALITY_SERVICE --> NAME_QUALITY
+    QUALITY_SERVICE --> LOCATION_QUALITY
+    QUALITY_SERVICE --> FINANCIAL_QUALITY
+    QUALITY_SERVICE --> TEMPORAL_QUALITY
+    QUALITY_SERVICE --> DESCRIPTIVE_QUALITY
+    QUALITY_SERVICE --> STATUS_QUALITY
+    
+    GEOCODING_SERVICE --> NOMINATIM
+    GEOCODING_SERVICE --> PHOTON
+    GEOCODING_SERVICE --> GEO_CACHE
+    GEOCODING_SERVICE --> RATE_LIMITER
+    GEOCODING_SERVICE --> GEO_VALIDATOR
+    
+    DATA_QUALITY_MGR --> ASSESSMENT_API
+    GEOCODING_SERVICE --> GEOCODING_API
+    DATA_QUALITY_MGR --> IMPROVEMENT_API
+    QUALITY_SERVICE --> STATS_API
+    
+    ASSESSMENT_API --> QUALITY_DASHBOARD
+    GEOCODING_API --> MAP_INTEGRATION
+    IMPROVEMENT_API --> PROJECT_ENHANCEMENT
+    
+    %% Styling
+    classDef quality fill:#e8f5e8,stroke:#388e3c,stroke-width:3px
+    classDef services fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef dimensions fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef geocoding fill:#fff8e1,stroke:#f57c00,stroke-width:2px
+    classDef api fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef frontend fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    
+    class DATA_QUALITY_MGR quality
+    class QUALITY_SERVICE,GEOCODING_SERVICE,DATA_VALIDATOR services
+    class NAME_QUALITY,LOCATION_QUALITY,FINANCIAL_QUALITY,TEMPORAL_QUALITY,DESCRIPTIVE_QUALITY,STATUS_QUALITY dimensions
+    class NOMINATIM,PHOTON,GEO_CACHE,RATE_LIMITER,GEO_VALIDATOR geocoding
+    class ASSESSMENT_API,GEOCODING_API,IMPROVEMENT_API,STATS_API api
+    class QUALITY_DASHBOARD,MAP_INTEGRATION,PROJECT_ENHANCEMENT frontend
+```
+
 ## 🔄 Advanced ETL Manager Architecture
 
 ```mermaid
@@ -655,17 +750,22 @@ graph TB
   - Custom hooks (useWebSocket) for real-time connectivity
   - Responsive component library with accessibility compliance
 
-- **📊 Advanced Dashboard & Analytics** - Interactive data visualizations
+- **📊 Enhanced Dashboard & Analytics** - Interactive data visualizations with user control
   - Chart.js integration with react-chartjs-2 for budget and progress tracking
-  - Leaflet maps with custom markers for project locations
+  - **User-Selectable Project Progress Tracking** - Interactive dropdown for project selection
+  - **Smart Project Filtering** - Intelligent exclusion of template/demo data
+  - **Dynamic Progress Charts** - Real-time updates based on user project selection
+  - **Advanced Mapping** - Leaflet maps with MarkerCluster integration and data quality indicators
   - Real-time KPI metrics and progress indicators
-  - Multi-tab navigation (Projects, Dashboard, Data Sync, Analysis)
+  - Multi-tab navigation (Projects, Dashboard, Data Sync, Data Quality, Analysis)
 
 #### Backend Infrastructure (100% Complete)
 - **🚀 FastAPI Backend** - High-performance async API with comprehensive endpoints
   - Complete REST API with OpenAPI documentation
   - WebSocket support for real-time updates
   - SQLAlchemy 2.0 with async support and comprehensive models
+  - **Comprehensive Data Quality API** - Full suite of data quality management endpoints
+  - **Advanced Geocoding Integration** - Multi-provider geocoding with caching and validation
 
 - **🔄 Real-time System** - Production-ready WebSocket infrastructure
   - DataChangeNotifier for broadcasting updates
@@ -677,6 +777,13 @@ graph TB
   - Treasury API integration with financial data correlation
   - Data scheduler with error handling and retry logic
   - Municipal investment overview and risk assessment
+
+- **🔍 Data Quality Management** - Comprehensive data assessment and improvement system
+  - **Multi-Dimensional Quality Scoring** - Name, location, financial, temporal, descriptive, and status quality assessment
+  - **Template/Demo Data Detection** - Intelligent filtering of placeholder content
+  - **Geocoding Services** - Asynchronous geocoding with multiple providers (Nominatim, Photon)
+  - **Data Improvement Recommendations** - Actionable suggestions for data enhancement
+  - **Quality Statistics and Reporting** - Comprehensive metrics and trend analysis
 
 #### Database & Data Models (100% Complete)
 - **🗄️ Comprehensive Schema** - Full relational model implemented

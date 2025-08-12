@@ -63,7 +63,7 @@ async def list_projects(
     min_progress: Optional[int] = Query(default=None, ge=0, le=100),
     max_progress: Optional[int] = Query(default=None, ge=0, le=100),
     page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(default=100, ge=1, le=100),
     session: AsyncSession = Depends(get_db_session),
 ) -> Any:
     """List projects with advanced filtering and search capabilities."""

@@ -67,19 +67,83 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
     project.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Group projects by municipality for better organization
+  const groupedProjects = React.useMemo(() => {
+    const groups: Record<string, Project[]> = {};
+    filteredProjects.forEach(project => {
+      const municipality = project.municipality || 'Unknown Municipality';
+      if (!groups[municipality]) {
+        groups[municipality] = [];
+      }
+      groups[municipality].push(project);
+    });
+    
+    // Sort municipalities by number of projects (descending) and then alphabetically
+    const sortedMunicipalities = Object.keys(groups).sort((a, b) => {
+      const countDiff = groups[b].length - groups[a].length;
+      if (countDiff !== 0) return countDiff;
+      return a.localeCompare(b);
+    });
+    
+    return sortedMunicipalities.map(municipality => ({
+      municipality,
+      projects: groups[municipality].sort((a, b) => {
+        // Sort projects within municipality by phase/number if available
+        const aMatch = a.title.match(/Project\s+(\d+)/);
+        const bMatch = b.title.match(/Project\s+(\d+)/);
+        if (aMatch && bMatch) {
+          return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+        }
+        return a.title.localeCompare(b.title);
+      })
+    }));
+  }, [filteredProjects]);
+
   if (filteredProjects.length > 0) {
     return (
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              {...project}
-              onViewDetails={onViewDetails}
-              onProvideFeedback={onProvideFeedback}
-            />
-          ))}
-        </div>
+        {/* Display projects grouped by municipality */}
+        {groupedProjects.map(({ municipality, projects: municipalityProjects }) => (
+          <div key={municipality} className="mb-8">
+            {/* Municipality header */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                  <div className="w-1 h-8 bg-gradient-to-b from-water-blue-500 to-water-blue-700 rounded-full"></div>
+                  {municipality}
+                  <span className="text-sm font-normal text-gray-500 bg-water-blue-50 px-2 py-1 rounded-full">
+                    {municipalityProjects.length} project{municipalityProjects.length !== 1 ? 's' : ''}
+                  </span>
+                </h2>
+              </div>
+              
+              {/* Quick stats for this municipality */}
+              <div className="mt-3 flex gap-4 text-sm text-gray-600">
+                <span>
+                  Active: {municipalityProjects.filter(p => p.status === 'in_progress').length}
+                </span>
+                <span>
+                  Completed: {municipalityProjects.filter(p => p.status === 'completed').length}
+                </span>
+                <span>
+                  Budget: R{(municipalityProjects.reduce((sum, p) => sum + p.budget, 0) / 1000000).toFixed(1)}M
+                </span>
+              </div>
+            </div>
+            
+            {/* Projects grid for this municipality */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {municipalityProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  {...project}
+                  onViewDetails={onViewDetails}
+                  onProvideFeedback={onProvideFeedback}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
         
         {/* Add Report Button */}
         <div className="mt-8 text-center">

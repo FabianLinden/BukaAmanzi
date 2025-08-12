@@ -333,6 +333,169 @@ async def retry_etl_job(
         raise HTTPException(500, detail=f"Failed to retry job: {str(e)}")
 
 
+@router.post("/cleanup/old-format-projects")
+async def cleanup_old_format_projects(session: AsyncSession = Depends(get_db_session)) -> Dict[str, Any]:
+    """Clean up old format DWS projects ending with -003"""
+    try:
+        logger.info("Starting cleanup of old format projects")
+        
+        # Find all projects ending with -003
+        stmt = select(Project).where(
+            Project.source == 'dws_pmd',
+            Project.external_id.like('%-003')
+        )
+        result = await session.execute(stmt)
+        old_projects = result.scalars().all()
+        
+        logger.info(f"Found {len(old_projects)} old format projects to delete")
+        
+        if old_projects:
+            # Get their IDs
+            project_ids = [p.id for p in old_projects]
+            project_names = [f"{p.name} ({p.external_id})" for p in old_projects]
+            
+            # Delete them
+            from sqlalchemy import delete
+            delete_stmt = delete(Project).where(Project.id.in_(project_ids))
+            result = await session.execute(delete_stmt)
+            deleted_count = result.rowcount
+            
+            # Commit the changes
+            await session.commit()
+            
+            logger.info(f"Successfully deleted {deleted_count} old format projects")
+            
+            return {
+                "status": "success",
+                "deleted_count": deleted_count,
+                "deleted_projects": project_names,
+                "message": f"Successfully deleted {deleted_count} old format projects"
+            }
+        else:
+            return {
+                "status": "success",
+                "deleted_count": 0,
+                "message": "No old format projects found"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error during old format project cleanup: {str(e)}")
+        raise HTTPException(500, detail=f"Failed to cleanup old format projects: {str(e)}")
+
+
+@router.post("/cleanup/true-duplicates")
+async def cleanup_true_duplicates(session: AsyncSession = Depends(get_db_session)) -> Dict[str, Any]:
+    """Find and clean up projects with identical external IDs (true duplicates)"""
+    try:
+        logger.info("Starting cleanup of true duplicate projects")
+        
+        # Find projects with duplicate external IDs
+        from sqlalchemy import func
+        duplicate_external_ids_stmt = select(Project.external_id).group_by(Project.external_id).having(func.count(Project.id) > 1)
+        result = await session.execute(duplicate_external_ids_stmt)
+        duplicate_external_ids = [row[0] for row in result.fetchall()]
+        
+        logger.info(f"Found {len(duplicate_external_ids)} external IDs with duplicates")
+        
+        if not duplicate_external_ids:
+            return {
+                "status": "success",
+                "deleted_count": 0,
+                "message": "No true duplicates found"
+            }
+        
+        deleted_projects = []
+        total_deleted = 0
+        
+        for external_id in duplicate_external_ids:
+            # Get all projects with this external ID
+            projects_stmt = select(Project).where(Project.external_id == external_id).order_by(Project.created_at)
+            projects_result = await session.execute(projects_stmt)
+            projects = projects_result.scalars().all()
+            
+            if len(projects) <= 1:
+                continue
+            
+            # Keep the first (oldest) project, delete the rest
+            keep_project = projects[0]
+            duplicate_projects = projects[1:]
+            
+            logger.info(f"External ID '{external_id}': keeping {keep_project.id}, deleting {len(duplicate_projects)} duplicates")
+            
+            # Delete duplicates
+            for dup_project in duplicate_projects:
+                deleted_projects.append(f"{dup_project.name} ({dup_project.external_id}) - {dup_project.id}")
+                await session.delete(dup_project)
+                total_deleted += 1
+        
+        # Commit all changes
+        await session.commit()
+        
+        logger.info(f"Successfully deleted {total_deleted} duplicate projects")
+        
+        return {
+            "status": "success",
+            "deleted_count": total_deleted,
+            "duplicate_external_ids": duplicate_external_ids,
+            "deleted_projects": deleted_projects,
+            "message": f"Successfully deleted {total_deleted} duplicate projects across {len(duplicate_external_ids)} external IDs"
+        }
+            
+    except Exception as e:
+        logger.error(f"Error during true duplicates cleanup: {str(e)}")
+        raise HTTPException(500, detail=f"Failed to cleanup true duplicates: {str(e)}")
+
+
+@router.post("/cleanup/static-projects")
+async def cleanup_static_projects(session: AsyncSession = Depends(get_db_session)) -> Dict[str, Any]:
+    """Clean up static/placeholder projects with no meaningful data"""
+    try:
+        logger.info("Starting cleanup of static projects")
+        
+        # Find static projects (those with STATIC in external_id or empty/placeholder data)
+        stmt = select(Project).where(
+            Project.source == 'dws_pmd',
+            Project.external_id.like('%STATIC%')
+        )
+        result = await session.execute(stmt)
+        static_projects = result.scalars().all()
+        
+        logger.info(f"Found {len(static_projects)} static projects to delete")
+        
+        if static_projects:
+            # Get their info
+            project_ids = [p.id for p in static_projects]
+            project_names = [f"{p.name} ({p.external_id})" for p in static_projects]
+            
+            # Delete them
+            from sqlalchemy import delete
+            delete_stmt = delete(Project).where(Project.id.in_(project_ids))
+            result = await session.execute(delete_stmt)
+            deleted_count = result.rowcount
+            
+            # Commit the changes
+            await session.commit()
+            
+            logger.info(f"Successfully deleted {deleted_count} static projects")
+            
+            return {
+                "status": "success",
+                "deleted_count": deleted_count,
+                "deleted_projects": project_names,
+                "message": f"Successfully deleted {deleted_count} static projects"
+            }
+        else:
+            return {
+                "status": "success",
+                "deleted_count": 0,
+                "message": "No static projects found"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error during static project cleanup: {str(e)}")
+        raise HTTPException(500, detail=f"Failed to cleanup static projects: {str(e)}")
+
+
 # Utility function for initialization (called during app startup)
 
 def initialize_etl_manager(notification_manager: DataChangeNotifier) -> None:

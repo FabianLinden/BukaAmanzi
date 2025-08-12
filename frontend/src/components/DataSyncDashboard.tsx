@@ -93,7 +93,7 @@ export const DataSyncDashboard: React.FC = () => {
 
   const fetchSchedulerStatus = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/etl/manager/status`);
+      const response = await fetch(`/api/v1/etl/manager/status`);
       if (!response.ok) throw new Error('Failed to fetch ETL manager status');
       const data = await response.json();
       setSchedulerStatus({
@@ -117,7 +117,7 @@ export const DataSyncDashboard: React.FC = () => {
 
   const fetchDataSourceHealth = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/health/data-sources`);
+      const response = await fetch(`/api/v1/data/health/data-sources`);
       if (!response.ok) throw new Error('Failed to fetch data source health');
       const data = await response.json();
       setDataSourceHealth(data);
@@ -128,7 +128,7 @@ export const DataSyncDashboard: React.FC = () => {
 
   const fetchDataQuality = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/data/stats/data-quality`);
+      const response = await fetch(`/api/v1/data/stats/data-quality`);
       if (!response.ok) throw new Error('Failed to fetch data quality stats');
       const data = await response.json();
       setDataQuality(data);
@@ -157,7 +157,7 @@ export const DataSyncDashboard: React.FC = () => {
   const handleStartScheduler = async () => {
     try {
       setSyncLoading('start');
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/etl/manager/start`, {
+      const response = await fetch(`/api/v1/etl/manager/start`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to start ETL manager');
@@ -172,7 +172,7 @@ export const DataSyncDashboard: React.FC = () => {
   const handleStopScheduler = async () => {
     try {
       setSyncLoading('stop');
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/etl/manager/stop`, {
+      const response = await fetch(`/api/v1/etl/manager/stop`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to stop ETL manager');
@@ -187,7 +187,7 @@ export const DataSyncDashboard: React.FC = () => {
   const handleTriggerSync = async (source: 'all' | 'dws' | 'treasury' | 'correlation') => {
     try {
       setSyncLoading(source);
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/etl/sync`, {
+      const response = await fetch(`/api/v1/etl/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +210,7 @@ export const DataSyncDashboard: React.FC = () => {
       if (source === 'all') {
         // Trigger treasury sync
         setTimeout(async () => {
-          await fetch(`http://${window.location.hostname}:8000/api/v1/etl/sync`, {
+          await fetch(`/api/v1/etl/sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ source: 'treasury', priority: 1 })
@@ -219,7 +219,7 @@ export const DataSyncDashboard: React.FC = () => {
         
         // Trigger correlation sync
         setTimeout(async () => {
-          await fetch(`http://${window.location.hostname}:8000/api/v1/etl/sync`, {
+          await fetch(`/api/v1/etl/sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ source: 'correlation', priority: 1 })

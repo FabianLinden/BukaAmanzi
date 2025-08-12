@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { create } from 'zustand';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectDetails } from './components/ProjectDetails';
@@ -12,7 +12,13 @@ import { DataSyncDashboard } from './components/DataSyncDashboard';
 import { ProjectCorrelationAnalysis } from './components/ProjectCorrelationAnalysis';
 import { MunicipalInvestmentOverview } from './components/MunicipalInvestmentOverview';
 import { RecentActivity } from './components/RecentActivity';
+import { DataQualityDashboard } from './components/DataQualityDashboard';
 import { useWebSocket } from './hooks/useWebSocket';
+import { 
+  categorizeProjects, 
+  filterCompleteProjects, 
+  parseLocationFromProject 
+} from './utils/projectDataUtils';
 
 declare global {
   namespace JSX {
@@ -177,7 +183,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
-  const [currentView, setCurrentView] = useState<'projects' | 'dashboard' | 'data-sync' | 'correlation' | 'municipal-overview'>('projects');
+  const [currentView, setCurrentView] = useState<'projects' | 'dashboard' | 'data-sync' | 'correlation' | 'municipal-overview' | 'data-quality'>('projects');
+  const [showOnlyCompleteProjects, setShowOnlyCompleteProjects] = useState<boolean>(true);
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportFormProject, setReportFormProject] = useState<{ id: string; name: string } | null>(null);
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<string | null>(null);
@@ -213,7 +220,7 @@ export default function App() {
 
   // Initialize WebSocket connection
   const { send } = useWebSocket(
-    `ws://${window.location.hostname}:8000/ws/projects`,
+    `ws://${window.location.hostname}:5173/ws/projects`,
     {
       onOpen: () => {
         console.log('WebSocket connected');
@@ -236,29 +243,65 @@ export default function App() {
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/projects`);
+        const response = await fetch(`/api/v1/projects/?limit=100`);
         if (response.ok) {
           const apiProjects = await response.json();
+          // Use the utility function to parse location data
+          const parseLocation = parseLocationFromProject;
+
+          // Helper function to format dates properly
+          const formatDate = (dateStr: string | null) => {
+            if (!dateStr || dateStr.trim() === '') {
+              return null; // Return null for missing dates instead of current date
+            }
+            try {
+              return new Date(dateStr).toISOString().split('T')[0];
+            } catch {
+              return null;
+            }
+          };
+
+          // Helper function to parse budget values (handles comma decimal separators)
+          const parseBudgetValue = (value: any): number => {
+            if (typeof value === 'number') {
+              return value;
+            }
+            if (typeof value === 'string') {
+              // Handle comma as decimal separator (European format)
+              const cleanValue = value.replace(/,/g, '.');
+              const parsed = parseFloat(cleanValue);
+              return isNaN(parsed) ? 0 : parsed;
+            }
+            return 0;
+          };
+
           // Transform API data to match frontend interface
-          const transformedProjects = apiProjects.map((proj: any) => ({
-            id: proj.id,
-            title: proj.name,
-            location: proj.address || 'Location not specified',
-            description: proj.description || 'No description available',
-            longDescription: proj.description || 'No detailed description available',
-            progress: proj.progress_percentage || 0,
-            budget: proj.budget_allocated || 0,
-            spent: proj.budget_spent || 0,
-            startDate: proj.start_date || new Date().toISOString().split('T')[0],
-            endDate: proj.end_date || new Date().toISOString().split('T')[0],
-            status: proj.status as 'planned' | 'in_progress' | 'completed' | 'delayed' | 'cancelled',
-            contractor: proj.contractor || 'Not specified',
-            municipality: proj.municipality_name || 'Unknown Municipality',
-            lastUpdated: proj.updated_at || new Date().toISOString(),
-            milestones: [],
-            documents: [],
-            updates: []
-          }));
+          const transformedProjects = apiProjects.map((proj: any) => {
+            const locationData = parseLocation(proj);
+            const hasValidDates = proj.start_date && proj.end_date && proj.start_date.trim() !== '' && proj.end_date.trim() !== '';
+            
+            return {
+              id: proj.id,
+              title: proj.name,
+              location: proj.address || (locationData && locationData.coordinates ? locationData.coordinates : 'Location not specified'),
+              description: proj.description || 'No description available',
+              longDescription: proj.description || 'No detailed description available',
+              progress: proj.progress_percentage || 0,
+              budget: parseBudgetValue(proj.budget_allocated),
+              spent: parseBudgetValue(proj.budget_spent),
+              startDate: hasValidDates ? formatDate(proj.start_date) || '2024-01-01' : '2024-01-01',
+              endDate: hasValidDates ? formatDate(proj.end_date) || '2025-12-31' : '2025-12-31',
+              status: proj.status as 'planned' | 'in_progress' | 'completed' | 'delayed' | 'cancelled',
+              contractor: proj.contractor || 'Not specified',
+              municipality: proj.municipality_name || 'Unknown Municipality',
+              lastUpdated: proj.updated_at || new Date().toISOString(),
+              milestones: [],
+              documents: [],
+              updates: [],
+              // Store original API data for analysis
+              _originalData: proj
+            };
+          });
           setProjects(transformedProjects);
         } else {
           console.error('Failed to load projects from API, using mock data');
@@ -291,9 +334,22 @@ export default function App() {
     }
   };
 
+  // Filter projects based on user preference
+  const displayedProjects = useMemo(() => {
+    if (showOnlyCompleteProjects && projects.length > 0) {
+      // Use original API data for filtering since it has the raw fields
+      const projectsWithOriginalData = projects.filter(p => p._originalData);
+      if (projectsWithOriginalData.length > 0) {
+        const completeProjects = filterCompleteProjects(projectsWithOriginalData.map(p => p._originalData));
+        return projects.filter(p => completeProjects.some(cp => cp.id === p.id));
+      }
+    }
+    return projects;
+  }, [projects, showOnlyCompleteProjects]);
+
   const handleSubmitReport = async (reportData: any) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/v1/reports`, {
+      const response = await fetch(`/api/v1/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -388,9 +444,12 @@ export default function App() {
                       {connectionStatus === 'connected' ? 'Live Data' : 
                        connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}
                     </span>
-                    <span className="text-xs text-water-blue-200">
-                      {projects.length} active projects
-                    </span>
+                  <span className="text-sm text-gray-500">
+                    {displayedProjects.length} of {projects.length} projects
+                    {showOnlyCompleteProjects && displayedProjects.length !== projects.length && 
+                      ` (${projects.length - displayedProjects.length} filtered out)`
+                    }
+                  </span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -457,6 +516,16 @@ export default function App() {
               >
                 Analysis
               </button>
+              <button
+                onClick={() => setCurrentView('data-quality')}
+                className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  currentView === 'data-quality'
+                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
+                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
+                }`}
+              >
+                Data Quality
+              </button>
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -467,6 +536,7 @@ export default function App() {
                   {currentView === 'data-sync' && 'Data Synchronization'}
                   {currentView === 'correlation' && 'Correlation Analysis'}
                   {currentView === 'municipal-overview' && 'Municipal Overview'}
+                  {currentView === 'data-quality' && 'Data Quality Analysis'}
                 </h2>
                 <div className="flex items-center">
                   <span className={`h-3 w-3 rounded-full mr-2 ${
@@ -481,6 +551,19 @@ export default function App() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
+                {(currentView === 'projects' || currentView === 'dashboard') && (
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={showOnlyCompleteProjects}
+                        onChange={(e) => setShowOnlyCompleteProjects(e.target.checked)}
+                        className="rounded border-gray-300 text-water-blue-600 shadow-sm focus:border-water-blue-300 focus:ring focus:ring-water-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Complete projects only</span>
+                    </label>
+                  </div>
+                )}
                 <div className="relative">
                   <input
                     type="text"
@@ -514,7 +597,7 @@ export default function App() {
 
             {currentView === 'projects' && (
               <ProjectsView 
-                projects={projects}
+                projects={displayedProjects}
                 searchQuery={searchQuery}
                 onViewDetails={handleViewDetails}
                 onProvideFeedback={handleProvideFeedback}
@@ -524,7 +607,11 @@ export default function App() {
             )}
             
             {currentView === 'dashboard' && (
-              <Dashboard projects={projects} onProjectClick={handleViewDetails} />
+              <Dashboard projects={displayedProjects} onProjectClick={handleViewDetails} />
+            )}
+            
+            {currentView === 'data-quality' && (
+              <DataQualityDashboard projects={projects.map(p => p._originalData).filter(Boolean)} />
             )}
             
             {currentView === 'data-sync' && (

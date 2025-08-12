@@ -1,8 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BudgetChart } from './charts/BudgetChart';
 import { ProgressChart } from './charts/ProgressChart';
 import { ProjectMap } from './maps/ProjectMap';
 import { ProgressBar } from './ui/ProgressBar';
+import { 
+  parseLocationFromProject, 
+  getProjectLocation,
+  validateProjectData,
+  categorizeProjects
+} from '../utils/projectDataUtils';
 
 interface Project {
   id: string;
@@ -24,26 +30,50 @@ interface DashboardProps {
   onProjectClick?: (projectId: string) => void;
 }
 
-// Helper function to parse location string to lat/lng
-const parseLocation = (locationStr: string, fallback: { lat: number; lng: number }) => {
-  // Try to extract coordinates from location string or use predefined coordinates
-  const locationMap: { [key: string]: { lat: number; lng: number } } = {
-    'Berg River Valley, Western Cape': { lat: -33.3019, lng: 18.8607 },
-    'Polihali, Lesotho/Gauteng Transfer': { lat: -29.8587, lng: 28.2293 },
-    'Richmond, KwaZulu-Natal': { lat: -30.3394, lng: 30.1986 },
-    'East London, Eastern Cape': { lat: -32.7847, lng: 27.4017 },
-    'Brits, North West': { lat: -25.3304, lng: 27.2499 },
-    'Mbombela, Mpumalanga': { lat: -25.4753, lng: 31.0059 },
-    'Giyani, Limpopo': { lat: -23.3026, lng: 30.7188 },
-    'Bloemfontein, Free State': { lat: -29.1217, lng: 26.2041 },
-    'Cape Town, Western Cape': { lat: -33.9249, lng: 18.4241 },
-    'Johannesburg South, Gauteng': { lat: -26.2041, lng: 28.0473 },
+// Get marker styling based on project data quality and location confidence
+const getProjectMarkerStyle = (project: any, location: any) => {
+  const originalData = project._originalData || project;
+  const validation = validateProjectData(originalData);
+  
+  let markerType = 'complete';
+  let opacity = 1.0;
+  let size = 'medium';
+  
+  // Determine marker type based on data quality
+  if (validation.isComplete) {
+    markerType = 'complete';
+    opacity = 1.0;
+    size = 'large';
+  } else {
+    markerType = 'incomplete';
+    opacity = 0.7;
+    size = 'medium';
+  }
+  
+  // Adjust based on location confidence
+  if (location.confidence === 'high') {
+    // Keep as is
+  } else if (location.confidence === 'medium' || location.isMunicipalityCenter) {
+    opacity *= 0.8;
+    size = 'medium';
+  } else {
+    opacity *= 0.6;
+    size = 'small';
+  }
+  
+  return {
+    markerType,
+    opacity,
+    size,
+    isComplete: validation.isComplete,
+    confidence: location.confidence,
+    isMunicipalityCenter: location.isMunicipalityCenter || false
   };
-
-  return locationMap[locationStr] || fallback;
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }) => {
+  // State for selected project tracking
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   // Calculate dashboard statistics
   const stats = useMemo(() => {
     const total = projects.length;
@@ -90,56 +120,98 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
     };
   }, [projects]);
 
-  // Transform projects for map
+  // Transform projects for map with enhanced location handling
   const mapProjects = useMemo(() => {
-    return projects.map(project => {
-      const coords = parseLocation(project.location, { lat: -29.0, lng: 24.0 });
-      return {
-        id: project.id,
-        name: project.title,
-        lat: coords.lat,
-        lng: coords.lng,
-        status: project.status,
-        progress: project.progress,
-        municipality: project.municipality,
-        budget: project.budget,
-        description: project.description,
-      };
+    return projects
+      .map(project => {
+        const originalData = project._originalData || project;
+        const location = getProjectLocation(originalData);
+        const markerStyle = getProjectMarkerStyle(project, location);
+        
+        return {
+          id: project.id,
+          name: project.title,
+          lat: location.lat,
+          lng: location.lng,
+          status: project.status,
+          progress: project.progress,
+          municipality: project.municipality,
+          budget: project.budget,
+          description: project.description,
+          
+          // Enhanced location metadata
+          locationSource: location.source,
+          locationConfidence: location.confidence,
+          hasCoordinates: location.hasCoordinates,
+          isMunicipalityCenter: location.isMunicipalityCenter || false,
+          municipalityName: location.municipalityName,
+          isFallback: location.isFallback || false,
+          
+          // Styling information
+          markerType: markerStyle.markerType,
+          opacity: markerStyle.opacity,
+          markerSize: markerStyle.size,
+          isComplete: markerStyle.isComplete,
+          
+          // Additional project info
+          originalProject: originalData
+        };
+      })
+      .filter(project => !project.isFallback); // Exclude fallback positions but include municipality centers
+  }, [projects]);
+
+  // Get suitable projects for progress tracking (exclude template data)
+  const trackableProjects = useMemo(() => {
+    return projects.filter(p => {
+      // Filter out obvious template/demo projects
+      const isTemplate = p.title.toLowerCase().includes('water infrastructure project') || 
+                        p.title.toLowerCase().includes('template') ||
+                        p.title.toLowerCase().includes('test') ||
+                        p.title.toLowerCase().includes('demo');
+      
+      // Include projects with meaningful progress or active status
+      const hasProgress = p.progress > 0 || ['in_progress', 'completed', 'delayed'].includes(p.status);
+      
+      return !isTemplate && hasProgress && p.startDate && p.endDate;
+    }).sort((a, b) => {
+      // Sort by: 1) In progress first, 2) Higher progress, 3) More recent start date
+      if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
+      if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
+      if (b.progress !== a.progress) return b.progress - a.progress;
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
     });
   }, [projects]);
 
-  // Generate actual project progress data for charts
+  // Set default selected project
+  React.useEffect(() => {
+    if (!selectedProjectId && trackableProjects.length > 0) {
+      setSelectedProjectId(trackableProjects[0].id);
+    }
+  }, [selectedProjectId, trackableProjects]);
+
+  // Generate progress data for selected project
   const progressData = useMemo(() => {
-    if (projects.length === 0) return [];
+    if (trackableProjects.length === 0) return [];
     
-    // Find the project with the most progress data (highest progress or most recent)
-    const activeProject = projects
-      .filter(p => p.progress > 0 && p.status !== 'cancelled')
-      .sort((a, b) => {
-        // Prioritize projects with higher progress and in-progress status
-        if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
-        if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
-        return b.progress - a.progress;
-      })[0] || projects[0];
+    const selectedProject = trackableProjects.find(p => p.id === selectedProjectId) || trackableProjects[0];
+    if (!selectedProject) return [];
     
-    if (!activeProject) return [];
-    
-    const startDate = new Date(activeProject.startDate);
-    const endDate = new Date(activeProject.endDate);
+    const startDate = new Date(selectedProject.startDate);
+    const endDate = new Date(selectedProject.endDate);
     const currentDate = new Date();
     const actualEndDate = currentDate < endDate ? currentDate : endDate;
     const data = [];
     
     // Calculate total project duration in months
     const totalMonths = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-    const currentMonths = (actualEndDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+    const currentMonths = Math.max((actualEndDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44), 1);
     
     // Generate realistic progress curve based on actual project progress
-    const targetProgress = activeProject.progress;
+    const targetProgress = selectedProject.progress;
     
     for (let d = new Date(startDate); d <= actualEndDate; d.setMonth(d.getMonth() + 1)) {
       const monthsFromStart = (d.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-      const timeProgress = monthsFromStart / Math.max(currentMonths, 1);
+      const timeProgress = monthsFromStart / currentMonths;
       
       // Create a realistic S-curve progression
       let progress;
@@ -173,12 +245,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
         date: d.toISOString(),
         progress,
         milestone,
-        projectName: activeProject.title
+        projectName: selectedProject.title
       });
     }
     
     return data;
-  }, [projects]);
+  }, [trackableProjects, selectedProjectId]);
+
+  // Get currently selected project info
+  const selectedProject = useMemo(() => {
+    return trackableProjects.find(p => p.id === selectedProjectId) || trackableProjects[0] || null;
+  }, [trackableProjects, selectedProjectId]);
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1000000000) {
@@ -281,17 +358,140 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
 
         {/* Progress Chart */}
         <div className="bg-gradient-to-br from-white to-aqua-50/60 p-6 rounded-lg shadow-lg border border-aqua-200/50 hover:shadow-xl transition-shadow">
-          <ProgressChart 
-            data={progressData}
-            title="Active Project Progress"
-            projectName={progressData.length > 0 ? progressData[0].projectName : "No Active Projects"}
-          />
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-gray-900">Project Progress Tracking</h3>
+              {trackableProjects.length > 1 && (
+                <div className="text-sm text-gray-500">
+                  {trackableProjects.length} trackable projects
+                </div>
+              )}
+            </div>
+            
+            {/* Project Selector */}
+            {trackableProjects.length > 0 ? (
+              <div className="mb-4">
+                <label htmlFor="project-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Project to Track:
+                </label>
+                <select
+                  id="project-select"
+                  value={selectedProjectId || ''}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-aqua-500 focus:border-aqua-500 text-sm"
+                >
+                  {trackableProjects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title} ({project.progress}% - {project.status.replace('_', ' ')})
+                    </option>
+                  ))}
+                </select>
+                
+                {/* Selected Project Info */}
+                {selectedProject && (
+                  <div className="mt-3 p-3 bg-gradient-to-r from-aqua-50 to-blue-50 rounded-lg border border-aqua-200">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">Current Progress:</span>
+                      <span className="font-bold text-aqua-600">{selectedProject.progress}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span className="font-medium text-gray-700">Status:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedProject.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        selectedProject.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        selectedProject.status === 'delayed' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {selectedProject.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span className="font-medium text-gray-700">Budget:</span>
+                      <span className="text-purple-600 font-medium">{formatCurrency(selectedProject.budget)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-600 text-center">
+                  No trackable projects available. Projects need valid start/end dates and meaningful progress data.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {progressData.length > 0 ? (
+            <ProgressChart 
+              data={progressData}
+              title={`Progress Timeline - ${selectedProject?.title || 'Unknown Project'}`}
+              projectName={progressData[0]?.projectName || "No Active Projects"}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-500">
+              <div className="text-center">
+                <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <p className="text-sm">No trackable project data available</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Project Locations Map */}
       <div className="bg-gradient-to-br from-white to-water-blue-50/60 p-6 rounded-lg shadow-lg border border-water-blue-200/50 hover:shadow-xl transition-shadow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Locations</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Project Locations</h3>
+          <div className="text-sm text-gray-500">
+            {mapProjects.length} projects mapped
+          </div>
+        </div>
+        
+        {/* Data Quality Notice */}
+        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-blue-900 mb-1">Location Data Quality Notice</h4>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                Project locations are displayed based on available data quality. 
+                <span className="font-medium">Green markers</span> show exact coordinates, 
+                <span className="font-medium">orange markers</span> indicate municipality center approximations, and 
+                <span className="font-medium">clustered markers</span> group nearby projects to reduce visual clutter.
+                Data quality filtering is available in the Data Quality tab.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Map Legend */}
+        <div className="flex flex-wrap gap-4 mb-4 p-3 bg-gray-50 rounded-lg border">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full opacity-100"></div>
+            <span className="text-xs text-gray-600">Complete Projects (Exact Location)</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full opacity-70"></div>
+            <span className="text-xs text-gray-600">Incomplete Projects</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-orange-500 rounded-full opacity-80"></div>
+            <span className="text-xs text-gray-600">Municipality Center (Approximate)</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center w-6 h-4 bg-blue-500 text-white text-xs rounded">
+              42
+            </div>
+            <span className="text-xs text-gray-600">Clustered Projects</span>
+          </div>
+        </div>
+        
         <ProjectMap 
           projects={mapProjects}
           height="500px"
@@ -301,6 +501,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onProjectClick }
             }
           }}
         />
+        
+        {/* Map Statistics */}
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="text-center p-2 bg-green-50 rounded border border-green-200">
+            <div className="font-semibold text-green-700">
+              {mapProjects.filter(p => p.isComplete && p.hasCoordinates).length}
+            </div>
+            <div className="text-green-600 text-xs">Exact Locations</div>
+          </div>
+          <div className="text-center p-2 bg-orange-50 rounded border border-orange-200">
+            <div className="font-semibold text-orange-700">
+              {mapProjects.filter(p => p.isMunicipalityCenter).length}
+            </div>
+            <div className="text-orange-600 text-xs">Municipality Centers</div>
+          </div>
+          <div className="text-center p-2 bg-blue-50 rounded border border-blue-200">
+            <div className="font-semibold text-blue-700">
+              {mapProjects.filter(p => !p.isComplete).length}
+            </div>
+            <div className="text-blue-600 text-xs">Incomplete Data</div>
+          </div>
+          <div className="text-center p-2 bg-gray-50 rounded border border-gray-200">
+            <div className="font-semibold text-gray-700">
+              {projects.length - mapProjects.length}
+            </div>
+            <div className="text-gray-600 text-xs">Not Mapped</div>
+          </div>
+        </div>
       </div>
 
       {/* Enhanced Analytics Row */}

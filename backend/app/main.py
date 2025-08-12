@@ -70,19 +70,38 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error(f"Error initializing data sync services: {e}")
             
-        # Initialize ETL manager
+        # Initialize and auto-start ETL manager
         try:
-            from app.api.v1.endpoints.etl import initialize_etl_manager
+            from app.api.v1.endpoints.etl import initialize_etl_manager, get_etl_manager
             initialize_etl_manager(app.state.notifier)
             logger.info("ETL Manager initialized")
+            
+            # Auto-start ETL Manager for automatic data processing
+            etl_manager = get_etl_manager()
+            await etl_manager.start()
+            app.state.etl_manager = etl_manager  # Store reference for shutdown
+            logger.info("ETL Manager auto-started - automated data processing is now active")
+            
         except Exception as e:
-            logger.error(f"Error initializing ETL manager: {e}")
+            logger.error(f"Error initializing/starting ETL manager: {e}")
 
     @app.on_event("shutdown")
     async def on_shutdown() -> None:
+        # Stop ETL Manager if it was started
+        etl_manager = getattr(app.state, "etl_manager", None)
+        if etl_manager:
+            try:
+                await etl_manager.stop()
+                logger.info("ETL Manager stopped gracefully")
+            except Exception as e:
+                logger.error(f"Error stopping ETL Manager: {e}")
+        
+        # Stop Redis listener task
         redis_task = getattr(app.state, "redis_listener_task", None)
         if redis_task:
             redis_task.cancel()
+            
+        # Close Redis connection
         redis_client = getattr(app.state, "redis", None)
         if redis_client:
             await redis_client.aclose()

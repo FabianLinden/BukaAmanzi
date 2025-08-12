@@ -6,6 +6,7 @@ from .endpoints.etl import router as etl_router
 from .endpoints.reports import router as reports_router
 from .endpoints.budgets import router as budgets_router
 from .endpoints.data_sync import router as data_sync_router
+from .endpoints.data_quality import router as data_quality_router
 
 
 api_router = APIRouter()
@@ -15,4 +16,5 @@ api_router.include_router(etl_router, prefix="/etl", tags=["etl"])
 api_router.include_router(reports_router, prefix="/reports", tags=["reports"])
 api_router.include_router(budgets_router, prefix="/budgets", tags=["budgets"])
 api_router.include_router(data_sync_router, prefix="/data", tags=["data-sync", "correlation", "scheduler"])
+api_router.include_router(data_quality_router, prefix="/data-quality", tags=["data-quality", "geocoding"])
 
