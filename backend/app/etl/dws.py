@@ -302,18 +302,28 @@ class EnhancedDWSMonitor:
             response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Step 2: Extract municipality information from page text
+            # Step 2: Extract municipality information from page text with better cleaning
+            # Remove navigation and header elements first
+            for element in soup(['nav', 'header', 'footer', 'script', 'style']):
+                element.decompose()
+
             page_text = soup.get_text()
-            
+
+            # Clean up the text to remove excessive whitespace and newlines
+            page_text = re.sub(r'\s+', ' ', page_text)
+
             # Look for municipality pattern: "Municipality Name - [CODE] X Projects with a Total value: RX,XXX,XXX.XX"
-            municipality_pattern = r'([A-Za-z\s\-\'\.\.\!]+?)\s*-\s*\[([A-Z0-9]+)\]\s*(\d+)\s*Projects\s*with\s*a\s*Total\s*value:\s*R([\d,\.]+)'
-            
+            municipality_pattern = r'([A-Za-z\s\-\'\.\!]+?)\s*-\s*\[([A-Z0-9]+)\]\s*(\d+)\s*Projects\s*with\s*a\s*Total\s*value:\s*R([\d,\.]+)'
+
             municipalities_found = 0
             for match in re.finditer(municipality_pattern, page_text):
-                municipality_name = match.group(1).strip()
+                raw_municipality_name = match.group(1).strip()
                 municipality_code = match.group(2)
                 project_count = int(match.group(3))
                 total_value_str = match.group(4)
+
+                # Clean municipality name to remove unwanted characters and text
+                municipality_name = self._clean_municipality_name(raw_municipality_name)
                 
                 try:
                     total_value = float(total_value_str.replace(',', ''))
@@ -374,7 +384,43 @@ class EnhancedDWSMonitor:
         except Exception as e:
             logger.error(f"Error in simplified DWS scraping: {str(e)}")
             raise
-    
+
+    def _clean_municipality_name(self, raw_name: str) -> str:
+        """Clean municipality name by removing unwanted text and characters"""
+        if not raw_name:
+            return ""
+
+        # Remove common unwanted patterns
+        unwanted_patterns = [
+            r'All!ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            r'Project Dashboards - Local Municipaly',
+            r'Project Dashboards',
+            r'Local Municipaly',
+            r'[!@#$%^&*()]+',
+            r'\n+',
+            r'\r+',
+            r'\t+',
+        ]
+
+        cleaned_name = raw_name
+        for pattern in unwanted_patterns:
+            cleaned_name = re.sub(pattern, '', cleaned_name, flags=re.IGNORECASE)
+
+        # Clean up whitespace
+        cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+
+        # If the name is too short or empty after cleaning, return a fallback
+        if len(cleaned_name) < 3:
+            # Try to extract the last meaningful part
+            parts = raw_name.split()
+            meaningful_parts = [part for part in parts if len(part) > 2 and part.isalpha()]
+            if meaningful_parts:
+                cleaned_name = meaningful_parts[-1]
+            else:
+                cleaned_name = "Unknown Municipality"
+
+        return cleaned_name
+
     def _determine_province_from_municipality_name(self, municipality_name: str) -> str:
         """Determine province from municipality name patterns"""
         # Common municipality name patterns that indicate provinces

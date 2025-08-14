@@ -69,21 +69,32 @@ def create_app() -> FastAPI:
             logger.info("Data sync services initialized")
         except Exception as e:
             logger.error(f"Error initializing data sync services: {e}")
-            
+
         # Initialize and auto-start ETL manager
         try:
             from app.api.v1.endpoints.etl import initialize_etl_manager, get_etl_manager
             initialize_etl_manager(app.state.notifier)
             logger.info("ETL Manager initialized")
-            
+
             # Auto-start ETL Manager for automatic data processing
             etl_manager = get_etl_manager()
             await etl_manager.start()
             app.state.etl_manager = etl_manager  # Store reference for shutdown
             logger.info("ETL Manager auto-started - automated data processing is now active")
-            
+
         except Exception as e:
             logger.error(f"Error initializing/starting ETL manager: {e}")
+
+        # Auto-start Data Scheduler for scheduled polling
+        try:
+            from app.api.v1.endpoints.data_sync import get_scheduler
+            data_scheduler = get_scheduler()
+            await data_scheduler.start_scheduler()
+            app.state.data_scheduler = data_scheduler  # Store reference for shutdown
+            logger.info("Data Scheduler auto-started - scheduled polling is now active")
+
+        except Exception as e:
+            logger.error(f"Error starting data scheduler: {e}")
 
     @app.on_event("shutdown")
     async def on_shutdown() -> None:
@@ -95,12 +106,21 @@ def create_app() -> FastAPI:
                 logger.info("ETL Manager stopped gracefully")
             except Exception as e:
                 logger.error(f"Error stopping ETL Manager: {e}")
-        
+
+        # Stop Data Scheduler if it was started
+        data_scheduler = getattr(app.state, "data_scheduler", None)
+        if data_scheduler:
+            try:
+                await data_scheduler.stop_scheduler()
+                logger.info("Data Scheduler stopped gracefully")
+            except Exception as e:
+                logger.error(f"Error stopping Data Scheduler: {e}")
+
         # Stop Redis listener task
         redis_task = getattr(app.state, "redis_listener_task", None)
         if redis_task:
             redis_task.cancel()
-            
+
         # Close Redis connection
         redis_client = getattr(app.state, "redis", None)
         if redis_client:

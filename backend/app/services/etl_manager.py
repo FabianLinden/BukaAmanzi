@@ -9,7 +9,6 @@ from uuid import uuid4
 from app.etl.dws import EnhancedDWSMonitor
 from app.etl.treasury import MunicipalTreasuryETL
 from app.services.data_correlation import DataCorrelationService
-from app.services.data_scheduler import DataScheduler
 from app.services.change_detection import calculate_content_hash
 from app.realtime.notifier import DataChangeNotifier
 from app.db.session import async_session_factory
@@ -61,8 +60,8 @@ class ETLManager:
     def __init__(self, notification_manager: DataChangeNotifier):
         self.notification_manager = notification_manager
         self.dws_monitor = EnhancedDWSMonitor(notification_manager)
+        self.treasury_etl = MunicipalTreasuryETL(notification_manager)
         self.correlation_service = DataCorrelationService(notification_manager)
-        self.data_scheduler = DataScheduler(notification_manager)
         
         # Job queue and processing
         self.job_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
@@ -121,12 +120,15 @@ class ETLManager:
         self.worker_tasks.append(cleanup_task)
         
         logger.info(f"ETL Manager started with {len(self.worker_tasks)} background tasks")
-        
-        # Notify startup
-        await self.notification_manager.notify_system_event(
-            "etl_manager_started",
-            {"timestamp": datetime.utcnow().isoformat(), "workers": len(self.worker_tasks)}
-        )
+
+        # Notify startup (with error handling for Redis issues)
+        try:
+            await self.notification_manager.notify_system_event(
+                "etl_manager_started",
+                {"timestamp": datetime.utcnow().isoformat(), "workers": len(self.worker_tasks)}
+            )
+        except Exception as e:
+            logger.warning(f"Could not send startup notification (Redis unavailable): {e}")
         
     async def stop(self) -> None:
         """Stop the ETL manager and all worker tasks"""
@@ -483,7 +485,7 @@ class ETLManager:
             logger.info(f"Starting Treasury sync job {job.job_id}")
             
             # Use Treasury ETL with async context manager
-            async with MunicipalTreasuryETL(self.notification_manager) as treasury_etl:
+            async with self.treasury_etl:
                 job.progress_percentage = 20
                 logger.info(f"Treasury sync job {job.job_id}: Initializing treasury ETL")
                 
@@ -495,7 +497,7 @@ class ETLManager:
                     job.progress_percentage = min(95, max(30, percentage))  # Keep between 30-95
                     logger.info(f"Treasury sync job {job.job_id}: {message} ({job.progress_percentage}%)")
                 
-                await treasury_etl.poll_with_change_detection(progress_callback=update_progress)
+                await self.treasury_etl.poll_with_change_detection(progress_callback=update_progress)
                 
                 job.progress_percentage = 100
                 logger.info(f"Treasury sync job {job.job_id}: Completed successfully")

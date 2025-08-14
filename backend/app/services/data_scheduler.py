@@ -87,12 +87,15 @@ class DataScheduler:
             )
             
             logger.info(f"Started {len(self.tasks)} scheduler tasks")
-            
-            # Notify that scheduler has started
-            await self.notification_manager.notify_system_event(
-                "scheduler_started", 
-                {"timestamp": datetime.utcnow().isoformat(), "tasks": list(self.tasks.keys())}
-            )
+
+            # Notify that scheduler has started (with error handling for Redis issues)
+            try:
+                await self.notification_manager.notify_system_event(
+                    "scheduler_started",
+                    {"timestamp": datetime.utcnow().isoformat(), "tasks": list(self.tasks.keys())}
+                )
+            except Exception as e:
+                logger.warning(f"Could not send scheduler startup notification (Redis unavailable): {e}")
             
         except Exception as e:
             logger.error(f"Error starting scheduler: {str(e)}")

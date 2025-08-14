@@ -4,10 +4,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Report, Contributor
+from app.db.models import Report, Contributor, Project, Municipality, FinancialData
 from app.db.session import get_db_session
 from app.utils.logger import setup_logger
 
@@ -61,6 +61,63 @@ class ContributorOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+@router.get("/summary")
+async def get_reports_summary(
+    session: AsyncSession = Depends(get_db_session),
+) -> Any:
+    """Get summary statistics for the water infrastructure monitoring system."""
+    try:
+        # Get project counts
+        projects_stmt = select(func.count(Project.id))
+        projects_result = await session.execute(projects_stmt)
+        total_projects = projects_result.scalar()
+
+        # Get municipality counts
+        municipalities_stmt = select(func.count(Municipality.id))
+        municipalities_result = await session.execute(municipalities_stmt)
+        total_municipalities = municipalities_result.scalar()
+
+        # Get financial data counts
+        financial_stmt = select(func.count(FinancialData.id))
+        financial_result = await session.execute(financial_stmt)
+        total_financial_records = financial_result.scalar()
+
+        # Get report counts
+        reports_stmt = select(func.count(Report.id))
+        reports_result = await session.execute(reports_stmt)
+        total_reports = reports_result.scalar()
+
+        # Get project status breakdown
+        status_stmt = select(Project.status, func.count(Project.id)).group_by(Project.status)
+        status_result = await session.execute(status_stmt)
+        status_breakdown = {status: count for status, count in status_result.fetchall()}
+
+        # Calculate total budget
+        budget_stmt = select(func.sum(Project.budget_allocated))
+        budget_result = await session.execute(budget_stmt)
+        total_budget = budget_result.scalar() or 0.0
+
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "system_overview": {
+                "total_projects": total_projects,
+                "total_municipalities": total_municipalities,
+                "total_financial_records": total_financial_records,
+                "total_reports": total_reports,
+                "total_budget_allocated": total_budget
+            },
+            "project_status": status_breakdown,
+            "data_sources": {
+                "dws": {"status": "active", "projects": total_projects},
+                "treasury": {"status": "active", "financial_records": total_financial_records}
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error generating reports summary: {str(e)}")
+        raise HTTPException(500, detail=f"Failed to generate summary: {str(e)}")
 
 
 @router.get("/", response_model=List[ReportOut])

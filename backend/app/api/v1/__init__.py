@@ -7,9 +7,11 @@ from .endpoints.reports import router as reports_router
 from .endpoints.budgets import router as budgets_router
 from .endpoints.data_sync import router as data_sync_router
 from .endpoints.data_quality import router as data_quality_router
+from .endpoints.health import router as health_router
 
 
 api_router = APIRouter()
+api_router.include_router(health_router, tags=["health"])
 api_router.include_router(municipalities_router, prefix="/municipalities", tags=["municipalities"])
 api_router.include_router(projects_router, prefix="/projects", tags=["projects"])
 api_router.include_router(etl_router, prefix="/etl", tags=["etl"])
