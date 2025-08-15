@@ -391,72 +391,100 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-water-blue-50 via-aqua-50/30 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-water-blue-50 via-aqua-50/30 to-white animate-fade-in">
       {/* Header */}
-      <header className="relative bg-gradient-to-br from-water-blue-600 via-ocean-600 to-water-blue-800 text-white overflow-hidden">
+      <header className="relative bg-gradient-to-br from-water-blue-600 via-ocean-600 to-water-blue-800 text-white overflow-hidden shadow-2xl">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <WaterWave className="w-full h-full" color="#ffffff" opacity={0.15} speed="slow" variant="wave" />
-          <WaterBubbles count={12} className="opacity-20" />
+          <WaterBubbles count={15} className="opacity-20" />
         </div>
-        
+
+        {/* Enhanced Decorative Elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-gradient-shift" />
+
         {/* Decorative Water Droplets */}
-        <div className="absolute top-8 left-1/4 opacity-30">
+        <div className="absolute top-8 left-1/4 opacity-30 animate-gentle-bounce">
           <WaterDroplet size="lg" delay={500} />
         </div>
-        <div className="absolute top-16 right-1/3 opacity-25">
+        <div className="absolute top-16 right-1/3 opacity-25 animate-gentle-bounce">
           <WaterDroplet size="md" delay={1000} />
         </div>
-        <div className="absolute top-12 left-3/4 opacity-35">
+        <div className="absolute top-12 left-3/4 opacity-35 animate-gentle-bounce">
           <WaterDroplet size="sm" delay={1500} />
         </div>
-        
-        <div className="relative z-10 container mx-auto px-4 py-16">
+
+        <div className="relative z-10 container mx-auto px-4 py-20">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div className="mb-8 md:mb-0">
-              <div className="flex items-center mb-4">
-                {/* Water Drop Logo */}
-                <div className="w-12 h-14 mr-4 bg-gradient-to-b from-water-blue-200 to-water-blue-400 rounded-full relative animate-droplet" 
+            <div className="mb-8 md:mb-0 animate-slide-in-left">
+              <div className="flex items-center mb-6">
+                {/* Enhanced Water Drop Logo */}
+                <div className="w-16 h-20 mr-6 bg-gradient-to-b from-water-blue-200 to-water-blue-400 rounded-full relative animate-droplet shadow-lg"
                   style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' }}>
-                  <div className="absolute top-2 left-2 w-3 h-3 bg-white/50 rounded-full blur-sm" />
+                  <div className="absolute top-3 left-3 w-4 h-4 bg-white/60 rounded-full blur-sm" />
+                  <div className="absolute top-6 left-6 w-2 h-2 bg-white/40 rounded-full" />
                 </div>
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-white to-water-blue-100 bg-clip-text text-transparent">
+                  <h1 className="text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-white via-water-blue-100 to-aqua-100 bg-clip-text text-transparent animate-fade-in-down">
                     Buka Amanzi
                   </h1>
-                  <div className="text-sm font-medium text-water-blue-200 tracking-wider">WATER WATCH</div>
+                  <div className="text-base font-semibold text-water-blue-200 tracking-widest animate-fade-in-up">
+                    WATER WATCH SYSTEM
+                  </div>
                 </div>
               </div>
-              <p className="text-lg text-water-blue-100 max-w-lg leading-relaxed">
-                Monitoring water infrastructure projects across South Africa with transparency and community engagement
+              <p className="text-xl text-water-blue-100 max-w-2xl leading-relaxed animate-fade-in-up">
+                Monitoring water infrastructure projects across South Africa with transparency,
+                real-time data, and community engagement for sustainable development.
               </p>
             </div>
             
-            {/* Connection Status Card with animations */}
-            <div className="bg-white/15 backdrop-blur-md rounded-xl p-6 border border-white/20 animate-float">
-              <div className="text-sm text-water-blue-100 mb-3 font-medium">System Status</div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`h-3 w-3 rounded-full mr-3 animate-pulse ${
-                    connectionStatus === 'connected' ? 'bg-emerald-400 animate-glow-pulse' : 
-                    connectionStatus === 'connecting' ? 'bg-yellow-400' : 'bg-red-400'
-                  }`} />
-                  <div>
-                    <span className="text-sm font-medium text-white block">
-                      {connectionStatus === 'connected' ? 'Live Data' : 
-                       connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}
-                    </span>
-                  <span className="text-sm text-gray-500">
-                    {displayedProjects.length} of {projects.length} projects
-                    {showOnlyCompleteProjects && displayedProjects.length !== projects.length && 
-                      ` (${projects.length - displayedProjects.length} filtered out)`
-                    }
-                  </span>
+            {/* Enhanced Connection Status Card */}
+            <div className="bg-white/20 backdrop-blur-lg rounded-2xl p-8 border border-white/30 shadow-2xl animate-slide-in-right hover:bg-white/25 transition-all duration-300">
+              <div className="text-base text-water-blue-100 mb-4 font-semibold flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                System Status
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`h-4 w-4 rounded-full mr-3 shadow-lg ${
+                      connectionStatus === 'connected' ? 'bg-emerald-400 animate-glow-pulse shadow-emerald-400/50' :
+                      connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse shadow-yellow-400/50' : 'bg-red-400 animate-pulse shadow-red-400/50'
+                    }`} />
+                    <div>
+                      <span className="text-base font-semibold text-white block">
+                        {connectionStatus === 'connected' ? '🟢 Live Data Active' :
+                         connectionStatus === 'connecting' ? '🟡 Connecting...' : '🔴 Offline Mode'}
+                      </span>
+                      <span className="text-sm text-water-blue-200">
+                        {displayedProjects.length} of {projects.length} projects loaded
+                        {showOnlyCompleteProjects && displayedProjects.length !== projects.length &&
+                          ` (${projects.length - displayedProjects.length} filtered)`
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-water-blue-200">Last update</div>
-                  <div className="text-sm font-medium text-white">Just now</div>
+
+                <div className="border-t border-white/20 pt-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-xs text-water-blue-200 mb-1">Last Sync</div>
+                      <div className="text-sm font-medium text-white">
+                        Just now
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-water-blue-200 mb-1">Data Quality</div>
+                      <div className="text-sm font-medium text-emerald-300">
+                        ✓ Excellent
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -473,50 +501,70 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 -mt-12 relative z-10">
-        <div className="bg-gradient-to-br from-white to-water-blue-50 rounded-xl shadow-lg overflow-hidden mb-8 border border-water-blue-100/50">
-          <div className="p-6">
-            {/* Tab Navigation */}
-            <div className="flex flex-wrap gap-1 bg-gradient-to-r from-water-blue-100/80 to-aqua-100/80 backdrop-blur-sm rounded-lg p-1 mb-6 border border-water-blue-200/30">
+      <main className="container mx-auto px-4 py-8 -mt-12 relative z-10 animate-fade-in-up">
+        <div className="bg-gradient-to-br from-white via-white to-water-blue-50/30 rounded-2xl shadow-2xl overflow-hidden mb-8 border border-water-blue-200/30 backdrop-blur-sm">
+          <div className="p-8">
+            {/* Enhanced Tab Navigation */}
+            <div className="flex flex-wrap gap-2 bg-gradient-to-r from-water-blue-100/90 via-aqua-100/80 to-ocean-100/90 backdrop-blur-md rounded-xl p-2 mb-8 border border-water-blue-200/40 shadow-lg animate-slide-in-down">
               <button
                 onClick={() => setCurrentView('projects')}
-                className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 min-w-fit py-3 px-6 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                   currentView === 'projects'
-                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
-                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
+                    ? 'bg-gradient-to-r from-white via-water-blue-50 to-white text-water-blue-800 shadow-lg border border-water-blue-300/50 animate-scale-in'
+                    : 'text-ocean-700 hover:text-ocean-900 hover:bg-white/70 hover:shadow-md'
                 }`}
               >
-                Projects
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  Projects
+                </span>
               </button>
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 min-w-fit py-3 px-6 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                   currentView === 'dashboard'
-                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
-                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
+                    ? 'bg-gradient-to-r from-white via-water-blue-50 to-white text-water-blue-800 shadow-lg border border-water-blue-300/50 animate-scale-in'
+                    : 'text-ocean-700 hover:text-ocean-900 hover:bg-white/70 hover:shadow-md'
                 }`}
               >
-                Dashboard
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Dashboard
+                </span>
               </button>
               <button
                 onClick={() => setCurrentView('data-sync')}
-                className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 min-w-fit py-3 px-6 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                   currentView === 'data-sync'
-                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
-                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
+                    ? 'bg-gradient-to-r from-white via-water-blue-50 to-white text-water-blue-800 shadow-lg border border-water-blue-300/50 animate-scale-in'
+                    : 'text-ocean-700 hover:text-ocean-900 hover:bg-white/70 hover:shadow-md'
                 }`}
               >
-                Data Sync
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Data Sync
+                </span>
               </button>
               <button
                 onClick={() => setCurrentView('correlation')}
-                className={`flex-1 min-w-fit py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 min-w-fit py-3 px-6 rounded-lg text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                   currentView === 'correlation'
-                    ? 'bg-gradient-to-r from-white to-water-blue-50 text-water-blue-800 shadow-md border border-water-blue-200/30'
-                    : 'text-ocean-600 hover:text-ocean-800 hover:bg-white/60'
+                    ? 'bg-gradient-to-r from-white via-water-blue-50 to-white text-water-blue-800 shadow-lg border border-water-blue-300/50 animate-scale-in'
+                    : 'text-ocean-700 hover:text-ocean-900 hover:bg-white/70 hover:shadow-md'
                 }`}
               >
-                Analysis
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Analysis
+                </span>
               </button>
               <button
                 onClick={() => setCurrentView('data-quality')}
